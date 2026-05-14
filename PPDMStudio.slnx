@@ -3,5 +3,5 @@
     <File Path=".gitignore" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="TestWpfBlazor/PPDMStudio.csproj" />
+  <Project Path="PPDMStudio/PPDMStudio.csproj" />
 </Solution>
