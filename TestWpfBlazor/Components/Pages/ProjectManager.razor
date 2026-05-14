@@ -1,0 +1,128 @@
+﻿@page "/projects"
+@using PPDMStudio.Models
+@using PPDMStudio.Services
+@inject IProjectService ProjectService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@* <MudText Typo="Typo.h5" Class="mb-4">Manage Projects</MudText> *@
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="AddProject"
+           Class="mb-4">
+    Add Project
+</MudButton>
+
+<MudTable Items="ProjectService.Projects" Hover="true" Striped="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Server</MudTh>
+        <MudTh>Database</MudTh>
+        <MudTh>Auth</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.Description</MudTd>
+        <MudTd>@context.Server</MudTd>
+        <MudTd>@context.Database</MudTd>
+        <MudTd>
+            @if (context.UseWindowsAuthentication)
+            {
+                <MudChip T="string" Color="Color.Success" Size="Size.Small">Windows</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small">SQL</MudChip>
+            }
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           OnClick="@(() => EditProject(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           OnClick="@(() => DeleteProject(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No projects found. Click Add Project to create one.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private async Task AddProject()
+    {
+        var parameters = new DialogParameters
+    {
+        { nameof(ProjectDialog.Project), new Project() },
+        { nameof(ProjectDialog.IsNew), true }
+    };
+
+        var dialog = await DialogService.ShowAsync<ProjectDialog>("New Project", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            var (project, password) = ((Project, string?))result.Data!;
+            ProjectService.SaveProject(project, password);
+            ProjectService.SelectProject(project);
+            Snackbar.Add($"Project '{project.Name}' created.", Severity.Success);
+        }
+    }
+
+    private async Task EditProject(Project project)
+    {
+        // Clone the project so edits don't affect the original until saved
+        var clone = new Project
+        {
+            Id = project.Id,
+            Name = project.Name,
+            Description = project.Description,
+            Server = project.Server,
+            Database = project.Database,
+            Username = project.Username,
+            UseWindowsAuthentication = project.UseWindowsAuthentication
+        };
+
+        var parameters = new DialogParameters
+        {
+            { "Project", clone },
+            { "ExistingPassword", ProjectService.GetPassword(project.Id) }
+        };
+
+        var dialog = await DialogService.ShowAsync<Dialogs.ProjectDialog>("Edit Project", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            var (updated, password) = ((Project, string?))result.Data!;
+            ProjectService.SaveProject(updated, password);
+            Snackbar.Add($"Project '{updated.Name}' updated.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteProject(Project project)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Are you sure you want to delete '{project.Name}'?" },
+            { x => x.ButtonText, "Delete" },
+            { x => x.Color, Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            ProjectService.DeleteProject(project.Id);
+            Snackbar.Add($"Project '{project.Name}' deleted.", Severity.Success);
+        }
+    }
+}

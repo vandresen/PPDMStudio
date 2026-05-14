@@ -1,0 +1,96 @@
+﻿@inject IProjectService ProjectService
+@inject IDialogService DialogService
+@inject IWellService WellService
+@implements IDisposable
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="width:100%">
+
+    <MudSelect T="Project"
+               Label="Active Project"
+               Value="ProjectService.SelectedProject"
+               ValueChanged="OnProjectChanged"
+               ToStringFunc="@(p => p?.Name ?? "No Projects")"
+               Style="min-width: 250px;"
+               Class="mud-select-white">
+        @foreach (var project in ProjectService.Projects)
+        {
+            <MudSelectItem T="Project" Value="@project">@project.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    @if (ProjectService.SelectedProject != null)
+    {
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+        <MudText Style="color:white; font-size:0.85rem;">
+            <b>Server:</b> @ProjectService.SelectedProject.Server
+        </MudText>
+        <MudText Style="color:white; font-size:0.85rem;" Class="ml-2">
+            <b>DB:</b> @ProjectService.SelectedProject.Database
+        </MudText>
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+        <MudText Style="color:white; font-size:0.85rem;">
+            <b>Wells:</b> @(wellCount?.ToString("N0") ?? "...")
+        </MudText>
+    }
+
+    <MudSpacer />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Secondary"
+               StartIcon="@Icons.Material.Filled.Settings"
+               OnClick="OpenProjectManager">
+        Projects
+    </MudButton>
+
+</MudStack>
+
+@code {
+    private int? wellCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProjectService.OnChange += async () => await InvokeAsync(StateHasChanged);
+        await LoadWellCount();
+    }
+
+    public void Dispose()
+    {
+        ProjectService.OnChange -= async () => await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnProjectChanged(Project project)
+    {
+        ProjectService.SelectProject(project);
+        wellCount = null;
+        await LoadWellCount();
+    }
+
+    private async Task LoadWellCount()
+    {
+        if (ProjectService.SelectedProject == null) return;
+
+        try
+        {
+            var connectionString = ProjectService.SelectedProject.BuildConnectionString(
+                ProjectService.GetPassword(ProjectService.SelectedProject.Id));
+
+            wellCount = await WellService.GetWellCountAsync(connectionString);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            wellCount = null;
+        }
+    }
+
+    private async Task OpenProjectManager()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true
+        };
+        await DialogService.ShowAsync<ProjectManager>("Manage Projects", options);
+    }
+}

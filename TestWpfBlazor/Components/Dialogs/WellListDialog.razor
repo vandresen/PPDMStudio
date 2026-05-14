@@ -1,0 +1,58 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Save Well List</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="form">
+
+            <MudTextField @bind-Value="wellList.Name"
+                          Label="Well List Name"
+                          Required="true"
+                          RequiredError="Name is required"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="wellList.Description"
+                          Label="Description"
+                          Lines="2"
+                          Class="mb-4" />
+
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string ProjectId { get; set; } = string.Empty;
+
+    private MudForm form = default!;
+    private WellList wellList = new();
+
+    protected override void OnInitialized()
+    {
+        wellList.ProjectId = ProjectId;
+    }
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        wellList.CreatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        wellList.ModifiedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        MudDialog.Close(DialogResult.Ok(wellList));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

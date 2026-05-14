@@ -1,0 +1,19 @@
+# Build results
+bin/
+obj/
+
+# User specific
+*.user
+*.suo
+.vs/
+
+# AppData (never commit user data)
+AppData/
+
+# NuGet
+packages/
+*.nupkg
+
+# OS
+.DS_Store
+Thumbs.db

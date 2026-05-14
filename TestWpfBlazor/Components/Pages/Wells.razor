@@ -1,0 +1,335 @@
+﻿@page "/"
+@inject IWellService WellService
+@inject IProjectService ProjectService
+@inject IWellListService WellListService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDrawer @bind-Open="filterOpen" Anchor="Anchor.Right"
+           Elevation="2" Variant="DrawerVariant.Temporary"
+           Width="350px">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Filter Wells</MudText>
+    </MudDrawerHeader>
+    <MudStack Class="pa-4" Spacing="3">
+        <MudTextField @bind-Value="filter.UWI"
+                      Label="UWI"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.WellName"
+                      Label="Well Name"
+                      Placeholder="e.g. Pembina%"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.Operator"
+                      Label="Operator"
+                      Placeholder="e.g. Suncor%"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.AssignedField"
+                      Label="Field"
+                      Placeholder="e.g. Pembina%"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.County"
+                      Label="County"
+                      Placeholder="e.g. Brazos%"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.State"
+                      Label="State/Province"
+                      Placeholder="e.g. TX"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        <MudTextField @bind-Value="filter.Country"
+                      Label="Country"
+                      Placeholder="e.g. USA%"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+
+        <MudStack Row="true" Spacing="2" Class="mt-4">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       FullWidth="true"
+                       OnClick="ApplyFilters">
+                Search
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Clear"
+                       FullWidth="true"
+                       OnClick="ClearFilters">
+                Clear
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudDrawer>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+    <MudSelect T="WellList"
+               Label="Well List"
+               Value="selectedWellList"
+               ValueChanged="OnWellListChanged"
+               ToStringFunc="@(w => w?.Name ?? "All Wells")"
+               Style="min-width: 250px;">
+        <MudSelectItem T="WellList" Value="@nullWellList">All Wells</MudSelectItem>
+        @foreach (var wl in wellLists)
+        {
+            <MudSelectItem T="WellList" Value="@wl">@wl.Name (@wl.WellCount wells)</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudTooltip Text="Save current results as Well List">
+        <MudIconButton Icon="@Icons.Material.Filled.Save"
+                       Color="Color.Primary"
+                       Disabled="@(wells == null || !wells.Any())"
+                       OnClick="SaveAsWellList" />
+    </MudTooltip>
+
+    <MudTooltip Text="Delete selected Well List">
+        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                       Color="Color.Error"
+                       Disabled="@(selectedWellList == null)"
+                       OnClick="DeleteWellList" />
+    </MudTooltip>
+
+    @if (wells != null)
+    {
+        <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+            @wells.Count().ToString("N0") wells
+        </MudChip>
+    }
+
+    <MudSpacer />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.FilterList"
+               OnClick="@(() => filterOpen = true)">
+        Filters @(filter.IsEmpty ? "" : "(Active)")
+    </MudButton>
+
+</MudStack>
+
+@if (isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Class="mb-4" />
+}
+
+@if (wells != null)
+{
+    <MudTable T="Well" Items="wells" Hover="true" Striped="true" Dense="true"
+              MultiSelection="true" @bind-SelectedItems="selectedWells"
+              Height="calc(100vh - 220px)" FixedHeader="true">
+        <HeaderContent>
+            <MudTh>UWI</MudTh>
+            <MudTh>Well Name</MudTh>
+            <MudTh>Operator</MudTh>
+            <MudTh>Field</MudTh>
+            <MudTh>Spud Date</MudTh>
+            <MudTh>County</MudTh>
+            <MudTh>State</MudTh>
+            <MudTh>Country</MudTh>
+            <MudTh>Latitude</MudTh>
+            <MudTh>Longitude</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.UWI</MudTd>
+            <MudTd>@context.WELL_NAME</MudTd>
+            <MudTd>@context.OPERATOR</MudTd>
+            <MudTd>@context.ASSIGNED_FIELD</MudTd>
+            <MudTd>@context.SPUD_DATE</MudTd>
+            <MudTd>@context.COUNTY</MudTd>
+            <MudTd>@context.STATE</MudTd>
+            <MudTd>@context.COUNTRY</MudTd>
+            <MudTd>@context.SURFACE_LATITUDE</MudTd>
+            <MudTd>@context.SURFACE_LONGITUDE</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No wells found.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+
+    @if (selectedWells.Any())
+    {
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveSelectedAsWellList"
+                   Class="mt-4">
+            Save @selectedWells.Count Selected Wells as Well List
+        </MudButton>
+    }
+}
+
+@code {
+    private IEnumerable<Well>? wells;
+    private HashSet<Well> selectedWells = new();
+    private bool isLoading = false;
+    private bool filterOpen = false;
+    private WellFilter filter = new();
+    private List<WellList> wellLists = new();
+    private WellList? selectedWellList;
+    private WellList? nullWellList = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!ProjectService.Projects.Any())
+        {
+            var parameters = new DialogParameters
+        {
+            { nameof(ConfirmDialog.ContentText), "No projects found. Please go to Project Manager to create one." },
+            { nameof(ConfirmDialog.ButtonText), "OK" },
+            { nameof(ConfirmDialog.Color), Color.Warning }
+        };
+            await DialogService.ShowAsync<ConfirmDialog>("No Projects Available", parameters);
+            return;
+        }
+
+        await LoadWellLists();
+
+        // Restore last selected well list for this project
+        if (ProjectService.SelectedProject != null)
+        {
+            var lastId = ProjectService.GetLastWellList(ProjectService.SelectedProject.Id);
+            if (lastId != null)
+            {
+                selectedWellList = wellLists.FirstOrDefault(w => w.Id == lastId);
+                if (selectedWellList != null)
+                    await LoadData();
+            }
+        }
+    }
+
+    private async Task LoadWellLists()
+    {
+        if (ProjectService.SelectedProject == null) return;
+
+        var lists = await WellListService.GetWellListsAsync(
+            ProjectService.SelectedProject.Id.ToString());
+
+        wellLists = new List<WellList>();
+        foreach (var wl in lists)
+        {
+            var items = await WellListService.GetWellListItemsAsync(wl.Id);
+            wl.WellCount = items.Count();
+            wellLists.Add(wl);
+        }
+    }
+
+    private async Task OnWellListChanged(WellList wellList)
+    {
+        selectedWellList = wellList;
+
+        // Remember this selection for this project
+        if (ProjectService.SelectedProject != null && wellList != null)
+            ProjectService.SaveLastWellList(ProjectService.SelectedProject.Id, wellList.Id);
+
+        await LoadData();
+    }
+
+    private async Task ApplyFilters()
+    {
+        filterOpen = false;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        if (ProjectService.SelectedProject == null)
+        {
+            Snackbar.Add("Please select a project first.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            wells = null;
+            selectedWells = new();
+
+            IEnumerable<string>? wellListUwis = null;
+            if (selectedWellList != null)
+                wellListUwis = await WellListService.GetWellListItemsAsync(selectedWellList.Id);
+
+            var connectionString = ProjectService.SelectedProject.BuildConnectionString(
+                ProjectService.GetPassword(ProjectService.SelectedProject.Id));
+
+            wells = await WellService.GetWellsAsync(connectionString, filter, wellListUwis);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading wells: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        filter.Clear();
+        filterOpen = false;
+        await LoadData();
+    }
+
+    private async Task SaveAsWellList()
+    {
+        if (wells == null || !wells.Any()) return;
+        await SaveWellsToList(wells.Select(w => w.UWI));
+    }
+
+    private async Task SaveSelectedAsWellList()
+    {
+        if (!selectedWells.Any()) return;
+        await SaveWellsToList(selectedWells.Select(w => w.UWI));
+    }
+
+    private async Task SaveWellsToList(IEnumerable<string> uwis)
+    {
+        if (ProjectService.SelectedProject == null) return;
+
+        var parameters = new DialogParameters
+        {
+            { nameof(WellListDialog.ProjectId), ProjectService.SelectedProject.Id.ToString() }
+        };
+
+        var dialog = await DialogService.ShowAsync<WellListDialog>("Save Well List", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            var wellList = (WellList)result.Data!;
+            var id = await WellListService.SaveWellListAsync(wellList);
+            await WellListService.AddWellsToListAsync(id, uwis);
+            await LoadWellLists();
+            Snackbar.Add($"Well List '{wellList.Name}' saved with {uwis.Count()} wells.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteWellList()
+    {
+        if (selectedWellList == null) return;
+
+        var parameters = new DialogParameters
+        {
+            { nameof(ConfirmDialog.ContentText), $"Are you sure you want to delete '{selectedWellList.Name}'?" },
+            { nameof(ConfirmDialog.ButtonText), "Delete" },
+            { nameof(ConfirmDialog.Color), Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            await WellListService.DeleteWellListAsync(selectedWellList.Id);
+            selectedWellList = null;
+            await LoadWellLists();
+            await LoadData();
+            Snackbar.Add("Well List deleted.", Severity.Success);
+        }
+    }
+}

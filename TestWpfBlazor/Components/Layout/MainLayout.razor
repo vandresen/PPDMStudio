@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+@using PPDMStudio.Components.Shared
+@inject IProjectService ProjectService
+@implements IDisposable
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudText Typo="Typo.h6" Class="mr-4">PPDM Studio</MudText>
+        <MudDivider Vertical="true" FlexItem="true" Class="mr-4" />
+        <ProjectSelector />
+        <MudSpacer />
+    </MudAppBar>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+
+</MudLayout>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ProjectService.OnChange += async () => await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ProjectService.OnChange -= async () => await InvokeAsync(StateHasChanged);
+    }
+}
