@@ -7,11 +7,40 @@ namespace PPDMStudio.Services
     public interface IWellService
     {
         Task<IEnumerable<Well>> GetWellsAsync(string connectionString, WellFilter filter, IEnumerable<string>? wellListUwis = null);
+        Task<WellHeader?> GetWellHeaderAsync(string connectionString, string uwi);
         Task<int> GetWellCountAsync(string connectionString);
     }
 
     public class WellService : IWellService
     {
+        public async Task<WellHeader?> GetWellHeaderAsync(string connectionString, string uwi)
+        {
+            using var connection = new SqlConnection(connectionString);
+            return await connection.QuerySingleOrDefaultAsync<WellHeader>(
+                "SELECT W.UWI, W.WELL_NAME, W.OPERATOR, W.CURRENT_STATUS, " +
+                "W.PROFILE_TYPE, W.ENVIRONMENT_TYPE, W.DEPTH_DATUM, " +
+                "W.KB_ELEV, W.GROUND_ELEV, " +
+                "W.FINAL_TD, W.LOG_TD, W.DRILL_TD, W.MAX_TVD, " +
+                "W.SPUD_DATE, W.FINAL_DRILL_DATE, W.COMPLETION_DATE, W.ABANDONMENT_DATE, " +
+                "W.SURFACE_LATITUDE, W.SURFACE_LONGITUDE, " +
+                "W.BOTTOM_HOLE_LATITUDE, W.BOTTOM_HOLE_LONGITUDE, " +
+                "W.REMARK, " +
+                "MAX(CASE WHEN WA.AREA_TYPE = 'COUNTRY' THEN WA.AREA_ID END) AS COUNTRY, " +
+                "MAX(CASE WHEN WA.AREA_TYPE = 'STATE' THEN WA.AREA_ID END) AS STATE, " +
+                "MAX(CASE WHEN WA.AREA_TYPE = 'COUNTY' THEN WA.AREA_ID END) AS COUNTY " +
+                "FROM WELL W " +
+                "LEFT JOIN WELL_AREA WA ON W.UWI = WA.UWI " +
+                "WHERE W.UWI = @UWI " +
+                "GROUP BY W.UWI, W.WELL_NAME, W.OPERATOR, W.CURRENT_STATUS, " +
+                "W.PROFILE_TYPE, W.ENVIRONMENT_TYPE, W.DEPTH_DATUM, " +
+                "W.KB_ELEV, W.GROUND_ELEV, " +
+                "W.FINAL_TD, W.LOG_TD, W.DRILL_TD, W.MAX_TVD, " +
+                "W.SPUD_DATE, W.FINAL_DRILL_DATE, W.COMPLETION_DATE, W.ABANDONMENT_DATE, " +
+                "W.SURFACE_LATITUDE, W.SURFACE_LONGITUDE, " +
+                "W.BOTTOM_HOLE_LATITUDE, W.BOTTOM_HOLE_LONGITUDE, W.REMARK",
+                new { UWI = uwi });
+        }
+
         public async Task<IEnumerable<Well>> GetWellsAsync(
             string connectionString,
             WellFilter filter,

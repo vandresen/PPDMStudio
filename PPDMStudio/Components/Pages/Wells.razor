@@ -66,6 +66,17 @@
     </MudStack>
 </MudDrawer>
 
+@* Well Header Panel *@
+<MudDrawer @bind-Open="headerOpen"
+           Anchor="Anchor.Right"
+           Elevation="4"
+           Variant="DrawerVariant.Temporary"
+           Width="800px">
+    <WellHeaderPanel IsOpen="headerOpen"
+                     UWI="@selectedUWI"
+                     OnClose="CloseWellHeader" />
+</MudDrawer>
+
 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
     <MudSelect T="WellList"
                Label="Well List"
@@ -121,7 +132,9 @@
 {
     <MudTable T="Well" Items="wells" Hover="true" Striped="true" Dense="true"
               MultiSelection="true" @bind-SelectedItems="selectedWells"
-              Height="calc(100vh - 220px)" FixedHeader="true">
+              Height="calc(100vh - 220px)" FixedHeader="true"
+              OnRowClick="OnRowClick"
+              RowClass="cursor-pointer">
         <HeaderContent>
             <MudTh>UWI</MudTh>
             <MudTh>Well Name</MudTh>
@@ -172,6 +185,20 @@
     private List<WellList> wellLists = new();
     private WellList? selectedWellList;
     private WellList? nullWellList = null;
+    private bool headerOpen = false;
+    private string? selectedUWI;
+
+    private void OnRowClick(TableRowClickEventArgs<Well> args)
+    {
+        selectedUWI = args.Item.UWI;
+        headerOpen = true;
+    }
+
+    private void CloseWellHeader()
+    {
+        headerOpen = false;
+        selectedUWI = null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
