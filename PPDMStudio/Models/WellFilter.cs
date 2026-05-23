@@ -10,7 +10,6 @@
         public string? CurrentStatus { get; set; }
         public string? County { get; set; }
         public string? State { get; set; }
-        public string? Country { get; set; }
 
         public bool IsEmpty =>
             string.IsNullOrWhiteSpace(WellName) &&
@@ -19,8 +18,7 @@
             string.IsNullOrWhiteSpace(AssignedField) &&
             string.IsNullOrWhiteSpace(CurrentStatus) &&
             string.IsNullOrWhiteSpace(County) &&
-            string.IsNullOrWhiteSpace(State) &&
-            string.IsNullOrWhiteSpace(Country);
+            string.IsNullOrWhiteSpace(State);
 
         public void Clear()
         {
@@ -32,7 +30,6 @@
             CurrentStatus = null;
             County = null;
             State = null;
-            Country = null;
         }
     }
 }

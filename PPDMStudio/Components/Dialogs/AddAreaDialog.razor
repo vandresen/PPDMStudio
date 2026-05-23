@@ -1,0 +1,66 @@
+﻿@* Components/Dialogs/AddAreaDialog.razor *@
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New @AreaTypeLabel</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudTextField @bind-Value="areaId"
+                              Label="@($"{AreaTypeLabel} Code")"
+                              Variant="Variant.Outlined"
+                              Placeholder="@(AreaType == "STATE" ? "e.g. TX" : "e.g. 48113")"
+                              MaxLength="20"
+                              AutoFocus="true"
+                              Immediate="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="preferredName"
+                              Label="@($"{AreaTypeLabel} Name")"
+                              Variant="Variant.Outlined"
+                              Placeholder="@(AreaType == "STATE" ? "e.g. Texas" : "e.g. Dallas County")"
+                              MaxLength="255"
+                              Immediate="true" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@(!IsValid)"
+                   OnClick="Confirm">
+            Add
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string AreaType { get; set; } = string.Empty;
+
+    private string areaId = string.Empty;
+    private string preferredName = string.Empty;
+
+    private string AreaTypeLabel => AreaType switch
+    {
+        "STATE" => "State",
+        "COUNTY" => "County",
+        _ => AreaType
+    };
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(areaId) &&
+        !string.IsNullOrWhiteSpace(preferredName);
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Confirm() =>
+        MudDialog.Close(DialogResult.Ok(new AreaItem
+        {
+            AreaId = areaId.Trim().ToUpper(),
+            PreferredName = preferredName.Trim()
+        }));
+}

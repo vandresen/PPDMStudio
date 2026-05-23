@@ -1,4 +1,5 @@
-﻿@inject IWellService WellService
+﻿@* Components/Shared/WellHeaderPanel.razor *@
+@inject IWellService WellService
 @inject IProjectService ProjectService
 @inject ISnackbar Snackbar
 
@@ -10,12 +11,25 @@
         @* Header *@
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
             <MudText Typo="Typo.h6" Style="flex:1">@wellHeader.UWI</MudText>
+            @if (isDirty)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Save"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               Title="Save changes"
+                               OnClick="SaveChanges" />
+                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                               Size="Size.Small"
+                               Color="Color.Default"
+                               Title="Discard changes"
+                               OnClick="CancelChanges" />
+            }
             <MudIconButton Icon="@Icons.Material.Filled.Close"
                            Size="Size.Small"
                            OnClick="Close" />
         </MudStack>
 
-        <MudDivider Class="mb-4" />
+        <MudDivider Class="mb-2" />
 
         @if (isLoading)
         {
@@ -23,136 +37,35 @@
         }
         else
         {
-            @* IDENTIFICATION *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
-                IDENTIFICATION
-            </MudText>
-            <MudGrid Spacing="1" Class="mb-4">
-                <MudItem xs="12">
-                    <MudField Label="Well Name" Variant="Variant.Text">
-                        @wellHeader.WELL_NAME
-                    </MudField>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudField Label="Operator" Variant="Variant.Text">
-                        @wellHeader.OPERATOR
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="Current Status" Variant="Variant.Text">
-                        @wellHeader.CURRENT_STATUS
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="Profile Type" Variant="Variant.Text">
-                        @wellHeader.PROFILE_TYPE
-                    </MudField>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudField Label="Environment Type" Variant="Variant.Text">
-                        @wellHeader.ENVIRONMENT_TYPE
-                    </MudField>
-                </MudItem>
-            </MudGrid>
+            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-3">
 
-            @* LOCATION *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
-                LOCATION
-            </MudText>
-            <MudGrid Spacing="1" Class="mb-4">
-                <MudItem xs="6">
-                    <MudField Label="Country" Variant="Variant.Text">
-                        @wellHeader.COUNTRY
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="State/Province" Variant="Variant.Text">
-                        @wellHeader.STATE
-                    </MudField>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudField Label="County" Variant="Variant.Text">
-                        @wellHeader.COUNTY
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="Surface Latitude" Variant="Variant.Text">
-                        @wellHeader.SURFACE_LATITUDE
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="Surface Longitude" Variant="Variant.Text">
-                        @wellHeader.SURFACE_LONGITUDE
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="BH Latitude" Variant="Variant.Text">
-                        @wellHeader.BOTTOM_HOLE_LATITUDE
-                    </MudField>
-                </MudItem>
-                <MudItem xs="6">
-                    <MudField Label="BH Longitude" Variant="Variant.Text">
-                        @wellHeader.BOTTOM_HOLE_LONGITUDE
-                    </MudField>
-                </MudItem>
-            </MudGrid>
+                <MudTabPanel Text="Well Header">
+                    <WellHeaderTab @ref="wellHeaderTab"
+                                   EditCopy="editCopy"
+                                   OnFieldChanged="MarkDirty"
+                                   Operators="operators"
+                                   Statuses="statuses"
+                                   ProfileTypes="profileTypes"
+                                   OnAddOperator="AddOperator"
+                                   OnAddStatus="AddStatus"
+                                   OnAddProfileType="AddProfileType" />
+                </MudTabPanel>
 
-            @* DATES *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">DATES</MudText>
-            <div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
-                <div style="width:130px; min-width:130px;">
-                    <MudField Label="Spud Date" Variant="Variant.Text">@wellHeader.SPUD_DATE?.ToString("yyyy-MM-dd")</MudField>
-                </div>
-                <div style="width:130px; min-width:130px;">
-                    <MudField Label="Final Drill" Variant="Variant.Text">@wellHeader.FINAL_DRILL_DATE?.ToString("yyyy-MM-dd")</MudField>
-                </div>
-                <div style="width:130px; min-width:130px;">
-                    <MudField Label="Completion" Variant="Variant.Text">@wellHeader.COMPLETION_DATE?.ToString("yyyy-MM-dd")</MudField>
-                </div>
-                <div style="width:130px; min-width:130px;">
-                    <MudField Label="Abandonment" Variant="Variant.Text">@wellHeader.ABANDONMENT_DATE?.ToString("yyyy-MM-dd")</MudField>
-                </div>
-            </div>
+                <MudTabPanel Text="Location">
+                    <WellLocationTab @ref="wellLocationTab"
+                                     EditCopy="editCopy"
+                                     OnFieldChanged="MarkDirty"
+                                     SelectedState="selectedState"
+                                     SelectedStateChanged="OnStateChanged"
+                                     SelectedCounty="selectedCounty"
+                                     SelectedCountyChanged="OnCountyChanged"
+                                     SearchStates="SearchStates"
+                                     SearchCounties="SearchCounties"
+                                     OnAddNewState="AddNewState"
+                                     OnAddNewCounty="AddNewCounty" />
+                </MudTabPanel>
 
-            @* DEPTHS *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">DEPTHS</MudText>
-            <div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
-                <div style="width:120px; min-width:120px;">
-                    <MudField Label="Final TD" Variant="Variant.Text">@wellHeader.FINAL_TD</MudField>
-                </div>
-                <div style="width:120px; min-width:120px;">
-                    <MudField Label="Log TD" Variant="Variant.Text">@wellHeader.LOG_TD</MudField>
-                </div>
-                <div style="width:120px; min-width:120px;">
-                    <MudField Label="Drill TD" Variant="Variant.Text">@wellHeader.DRILL_TD</MudField>
-                </div>
-                <div style="width:120px; min-width:120px;">
-                    <MudField Label="Max TVD" Variant="Variant.Text">@wellHeader.MAX_TVD</MudField>
-                </div>
-            </div>
-
-            @* ELEVATIONS *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">ELEVATIONS</MudText>
-            <div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
-                <div style="width:140px; min-width:140px;">
-                    <MudField Label="Depth Datum" Variant="Variant.Text">@wellHeader.DEPTH_DATUM</MudField>
-                </div>
-                <div style="width:120px; min-width:120px;">
-                    <MudField Label="KB Elevation" Variant="Variant.Text">@wellHeader.KB_ELEV</MudField>
-                </div>
-                <div style="width:140px; min-width:140px;">
-                    <MudField Label="Ground Elevation" Variant="Variant.Text">@wellHeader.GROUND_ELEV</MudField>
-                </div>
-            </div>
-
-            @* REMARKS *@
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
-                REMARKS
-            </MudText>
-            <MudField Label="Remark" Variant="Variant.Text"
-                      Style="white-space:pre-wrap; min-height:80px;">
-                @wellHeader.REMARK
-            </MudField>
+            </MudTabs>
         }
     </MudPaper>
 }
@@ -161,9 +74,26 @@
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public string? UWI { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<WellHeader> OnSaved { get; set; }
 
     private WellHeader? wellHeader;
+    private WellHeader editCopy = new();
     private bool isLoading = false;
+    private bool isDirty = false;
+    private AreaItem? selectedState = null;
+    private AreaItem? selectedCounty = null;
+
+    // Refs so we can call ResetState() on child UI when cancelling
+    private WellHeaderTab? wellHeaderTab;
+    private WellLocationTab? wellLocationTab;
+
+    private IEnumerable<string> operators = Enumerable.Empty<string>();
+    private IEnumerable<string> statuses = Enumerable.Empty<string>();
+    private IEnumerable<string> profileTypes = Enumerable.Empty<string>();
+
+    private string GetConnectionString() =>
+        ProjectService.SelectedProject!.BuildConnectionString(
+            ProjectService.GetPassword(ProjectService.SelectedProject.Id));
 
     protected override async Task OnParametersSetAsync()
     {
@@ -178,10 +108,31 @@
         try
         {
             isLoading = true;
-            var connectionString = ProjectService.SelectedProject.BuildConnectionString(
-                ProjectService.GetPassword(ProjectService.SelectedProject.Id));
+            var cs = GetConnectionString();
 
-            wellHeader = await WellService.GetWellHeaderAsync(connectionString, UWI!);
+            wellHeader = await WellService.GetWellHeaderAsync(cs, UWI!);
+            ResetEditCopy();
+
+            var refTasks = new[]
+            {
+            WellService.GetReferenceValuesAsync(cs, "BUSINESS_ASSOCIATE", "BUSINESS_ASSOCIATE_ID"),
+            WellService.GetReferenceValuesAsync(cs, "R_WELL_STATUS",      "STATUS"),
+            WellService.GetReferenceValuesAsync(cs, "R_WELL_PROFILE_TYPE","WELL_PROFILE_TYPE"),
+        };
+            var results = await Task.WhenAll(refTasks);
+            operators = results[0];
+            statuses = results[1];
+            profileTypes = results[2];
+
+            // Always reset first, then load if values exist
+            selectedState = null;
+            selectedCounty = null;
+
+            if (!string.IsNullOrWhiteSpace(wellHeader?.STATE))
+                selectedState = await WellService.GetAreaByIdAsync(cs, wellHeader.STATE, "STATE");
+
+            if (!string.IsNullOrWhiteSpace(wellHeader?.COUNTY))
+                selectedCounty = await WellService.GetAreaByIdAsync(cs, wellHeader.COUNTY, "COUNTY");
         }
         catch (Exception ex)
         {
@@ -193,9 +144,185 @@
         }
     }
 
+    private void ResetEditCopy()
+    {
+        if (wellHeader == null) return;
+        editCopy = CopyHeader(wellHeader);
+        isDirty = false;
+        wellHeaderTab?.ResetState();
+        wellLocationTab?.ResetState();
+    }
+
+    private void MarkDirty() => isDirty = true;
+
+    private void OnStateChanged(AreaItem? state)
+    {
+        selectedState = state;
+        editCopy.STATE = state?.AreaId;
+        // Clear county when state changes
+        selectedCounty = null;
+        editCopy.COUNTY = null;
+        MarkDirty();
+    }
+
+    private async Task<IEnumerable<AreaItem>> SearchStates(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return Enumerable.Empty<AreaItem>();
+        return await WellService.SearchStatesAsync(GetConnectionString(), search);
+    }
+
+    private async Task<IEnumerable<AreaItem>> SearchCounties(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search) || selectedState == null)
+            return Enumerable.Empty<AreaItem>();
+        return await WellService.SearchCountiesAsync(
+            GetConnectionString(), selectedState.AreaId, search);
+    }
+
+    private async Task SaveChanges()
+    {
+        if (ProjectService.SelectedProject == null) return;
+
+        try
+        {
+            isLoading = true;
+            await WellService.UpdateWellHeaderAsync(GetConnectionString(), editCopy);
+            wellHeader = CopyHeader(editCopy);
+            isDirty = false;
+            Snackbar.Add("Well header saved.", Severity.Success);
+            await OnSaved.InvokeAsync(editCopy);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving well header: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CancelChanges()
+    {
+        ResetEditCopy();
+        if (!string.IsNullOrWhiteSpace(wellHeader?.STATE))
+        {
+            _ = Task.Run(async () =>
+            {
+                selectedState = await WellService.GetAreaByIdAsync(
+                    GetConnectionString(), wellHeader.STATE, "STATE");
+                selectedCounty = !string.IsNullOrWhiteSpace(wellHeader?.COUNTY)
+                    ? await WellService.GetAreaByIdAsync(GetConnectionString(), wellHeader.COUNTY, "COUNTY")
+                    : null;
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        else
+        {
+            selectedState = null;
+            selectedCounty = null;
+        }
+        Snackbar.Add("Changes discarded.", Severity.Info);
+    }
+
     private async Task Close()
     {
+        if (isDirty) CancelChanges();
         wellHeader = null;
         await OnClose.InvokeAsync();
     }
+
+    private async Task AddOperator(string name)
+    {
+        var cs = GetConnectionString();
+        await WellService.AddReferenceValueAsync(cs, "BUSINESS_ASSOCIATE", "BUSINESS_ASSOCIATE_ID", name);
+        operators = await WellService.GetReferenceValuesAsync(cs, "BUSINESS_ASSOCIATE", "BUSINESS_ASSOCIATE_ID");
+        Snackbar.Add($"Operator '{name}' added.", Severity.Success);
+    }
+
+    private async Task AddStatus(string name)
+    {
+        var cs = GetConnectionString();
+        await WellService.AddReferenceValueAsync(cs, "R_WELL_STATUS", "STATUS", name);
+        statuses = await WellService.GetReferenceValuesAsync(cs, "R_WELL_STATUS", "STATUS");
+        Snackbar.Add($"Status '{name}' added.", Severity.Success);
+    }
+
+    private async Task AddProfileType(string name)
+    {
+        var cs = GetConnectionString();
+        await WellService.AddReferenceValueAsync(cs, "R_WELL_PROFILE_TYPE", "WELL_PROFILE_TYPE", name);
+        profileTypes = await WellService.GetReferenceValuesAsync(cs, "R_WELL_PROFILE_TYPE", "WELL_PROFILE_TYPE");
+        Snackbar.Add($"Profile type '{name}' added.", Severity.Success);
+    }
+
+    private async Task AddNewState(AreaItem newState)
+    {
+        try
+        {
+            var cs = GetConnectionString();
+            await WellService.AddAreaAsync(cs, "STATE", newState.AreaId, newState.PreferredName);
+            OnStateChanged(newState);
+            Snackbar.Add($"State '{newState.PreferredName}' added.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding state: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddNewCounty(AreaItem newCounty)
+    {
+        if (selectedState == null) return;
+        try
+        {
+            var cs = GetConnectionString();
+            await WellService.AddCountyAsync(cs, newCounty.AreaId, newCounty.PreferredName, selectedState.AreaId);
+            OnCountyChanged(newCounty);
+            Snackbar.Add($"County '{newCounty.PreferredName}' added.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding county: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnCountyChanged(AreaItem? county)
+    {
+        selectedCounty = county;
+        editCopy.COUNTY = county?.AreaId;
+        MarkDirty();
+    }
+
+
+
+    private static decimal? ParseNullableDecimal(string? value) =>
+        decimal.TryParse(value, out var d) ? d : null;
+
+    private WellHeader CopyHeader(WellHeader src) => new WellHeader
+    {
+        UWI                   = src.UWI,
+        WELL_NAME             = src.WELL_NAME,
+        OPERATOR              = src.OPERATOR,
+        CURRENT_STATUS        = src.CURRENT_STATUS,
+        PROFILE_TYPE          = src.PROFILE_TYPE,
+        DEPTH_DATUM           = src.DEPTH_DATUM,
+        KB_ELEV               = src.KB_ELEV,
+        GROUND_ELEV           = src.GROUND_ELEV,
+        FINAL_TD              = src.FINAL_TD,
+        LOG_TD                = src.LOG_TD,
+        DRILL_TD              = src.DRILL_TD,
+        MAX_TVD               = src.MAX_TVD,
+        SPUD_DATE             = src.SPUD_DATE,
+        FINAL_DRILL_DATE      = src.FINAL_DRILL_DATE,
+        COMPLETION_DATE       = src.COMPLETION_DATE,
+        ABANDONMENT_DATE      = src.ABANDONMENT_DATE,
+        SURFACE_LATITUDE      = src.SURFACE_LATITUDE,
+        SURFACE_LONGITUDE     = src.SURFACE_LONGITUDE,
+        BOTTOM_HOLE_LATITUDE  = src.BOTTOM_HOLE_LATITUDE,
+        BOTTOM_HOLE_LONGITUDE = src.BOTTOM_HOLE_LONGITUDE,
+        REMARK                = src.REMARK,
+        STATE                 = src.STATE,
+        COUNTY                = src.COUNTY
+    };
 }

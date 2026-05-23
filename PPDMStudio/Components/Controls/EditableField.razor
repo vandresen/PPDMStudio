@@ -1,0 +1,37 @@
+﻿@* EditableField.razor *@
+<div @onclick="Activate" style="cursor:pointer; width:100%;">
+    @if (isEditing)
+    {
+        <MudTextField T="string"
+                      Value="@Value"
+                      ValueChanged="OnValueChanged"
+                      Label="@Label"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      AutoFocus="true"
+                      OnBlur="Deactivate"
+                      Style="width:100%" />
+    }
+    else
+    {
+        <MudField Label="@Label" Variant="Variant.Text">
+            @(string.IsNullOrWhiteSpace(Value) ? "—" : Value)
+        </MudField>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private bool isEditing = false;
+
+    private void Activate() => isEditing = true;
+    private void Deactivate() => isEditing = false;
+
+    private async Task OnValueChanged(string? v)
+    {
+        await ValueChanged.InvokeAsync(v);
+    }
+}

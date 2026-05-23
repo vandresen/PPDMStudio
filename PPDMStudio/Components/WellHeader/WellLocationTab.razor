@@ -1,0 +1,186 @@
+﻿@* Components/WellHeader/WellLocationTab.razor *@
+@inject IDialogService DialogService
+
+@* STATE *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">STATE</MudText>
+<MudGrid Spacing="1" Class="mb-4">
+    <MudItem xs="12">
+        <div style="display:flex; align-items:flex-end; gap:4px;">
+            <div style="flex:1">
+                @if (stateEditing)
+                {
+                    <MudAutocomplete T="AreaItem"
+                                     Label="State"
+                                     Value="SelectedState"
+                                     SearchFunc="SearchStates"
+                                     ToStringFunc="a => a?.PreferredName ?? string.Empty"
+                                     Variant="Variant.Text"
+                                     Dense="true"
+                                     Margin="Margin.Dense"
+                                     AutoFocus="true"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="true"
+                                     CoerceValue="true"
+                                     ValueChanged="OnStateChanged" />
+                }
+                else
+                {
+                    <MudField Label="State"
+                              Variant="Variant.Text"
+                              Style="cursor:pointer;"
+                              @onclick="() => stateEditing = true">
+                        @(SelectedState?.PreferredName ?? "Click to select…")
+                    </MudField>
+                }
+            </div>
+            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           Title="Add new state"
+                           OnClick="OpenAddStateDialog" />
+        </div>
+    </MudItem>
+</MudGrid>
+
+@* COUNTY *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">COUNTY</MudText>
+<MudGrid Spacing="1" Class="mb-4">
+    <MudItem xs="12">
+        <div style="display:flex; align-items:flex-end; gap:4px;">
+            <div style="flex:1">
+                @if (SelectedState == null)
+                {
+                    <MudField Label="County" Variant="Variant.Text"
+                              Style="color: var(--mud-palette-text-disabled);">
+                        Select a state first
+                    </MudField>
+                }
+                else if (countyEditing)
+                {
+                    <MudAutocomplete T="AreaItem"
+                                     Label="County"
+                                     Value="SelectedCounty"
+                                     SearchFunc="SearchCounties"
+                                     ToStringFunc="a => a?.PreferredName ?? string.Empty"
+                                     Variant="Variant.Text"
+                                     Dense="true"
+                                     Margin="Margin.Dense"
+                                     AutoFocus="true"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="true"
+                                     CoerceValue="true"
+                                     ValueChanged="OnCountyChanged" />
+                }
+                else
+                {
+                    <MudField Label="County"
+                              Variant="Variant.Text"
+                              Style="cursor:pointer;"
+                              @onclick="() => countyEditing = true">
+                        @(SelectedCounty?.PreferredName ?? "Click to select…")
+                    </MudField>
+                }
+            </div>
+            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           Title="Add new county"
+                           Disabled="@(SelectedState == null)"
+                           OnClick="OpenAddCountyDialog" />
+        </div>
+    </MudItem>
+</MudGrid>
+
+@* COORDINATES *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">COORDINATES</MudText>
+<MudGrid Spacing="1" Class="mb-4">
+    <MudItem xs="6">
+        <EditableField Label="Surface Latitude"
+                       Value="@EditCopy.SURFACE_LATITUDE?.ToString()"
+                       ValueChanged="v => { EditCopy.SURFACE_LATITUDE = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </MudItem>
+    <MudItem xs="6">
+        <EditableField Label="Surface Longitude"
+                       Value="@EditCopy.SURFACE_LONGITUDE?.ToString()"
+                       ValueChanged="v => { EditCopy.SURFACE_LONGITUDE = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </MudItem>
+    <MudItem xs="6">
+        <EditableField Label="BH Latitude"
+                       Value="@EditCopy.BOTTOM_HOLE_LATITUDE?.ToString()"
+                       ValueChanged="v => { EditCopy.BOTTOM_HOLE_LATITUDE = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </MudItem>
+    <MudItem xs="6">
+        <EditableField Label="BH Longitude"
+                       Value="@EditCopy.BOTTOM_HOLE_LONGITUDE?.ToString()"
+                       ValueChanged="v => { EditCopy.BOTTOM_HOLE_LONGITUDE = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter, EditorRequired] public WellHeader EditCopy { get; set; } = new();
+    [Parameter, EditorRequired] public EventCallback OnFieldChanged { get; set; }
+    [Parameter, EditorRequired] public AreaItem? SelectedState { get; set; }
+    [Parameter, EditorRequired] public EventCallback<AreaItem?> SelectedStateChanged { get; set; }
+    [Parameter, EditorRequired] public AreaItem? SelectedCounty { get; set; }
+    [Parameter, EditorRequired] public EventCallback<AreaItem?> SelectedCountyChanged { get; set; }
+    [Parameter, EditorRequired] public Func<string, CancellationToken, Task<IEnumerable<AreaItem>>> SearchStates { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<string, CancellationToken, Task<IEnumerable<AreaItem>>> SearchCounties { get; set; } = default!;
+    [Parameter] public EventCallback<AreaItem> OnAddNewState { get; set; }
+    [Parameter] public EventCallback<AreaItem> OnAddNewCounty { get; set; }
+
+    private bool stateEditing = false;
+    private bool countyEditing = false;
+
+    public void ResetState()
+    {
+        stateEditing = false;
+        countyEditing = false;
+    }
+
+    private async Task OnStateChanged(AreaItem? state)
+    {
+        await SelectedStateChanged.InvokeAsync(state);
+        if (state != null)
+            stateEditing = false;
+    }
+
+    private async Task OnCountyChanged(AreaItem? county)
+    {
+        await SelectedCountyChanged.InvokeAsync(county);
+        if (county != null)
+            countyEditing = false;
+    }
+
+    private async Task OpenAddStateDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+        var dialog = await DialogService.ShowAsync<AddAreaDialog>("Add State",
+            new DialogParameters { { nameof(AddAreaDialog.AreaType), "STATE" } }, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is AreaItem newState)
+            await OnAddNewState.InvokeAsync(newState);
+    }
+
+    private async Task OpenAddCountyDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+        var dialog = await DialogService.ShowAsync<AddAreaDialog>("Add County",
+            new DialogParameters { { nameof(AddAreaDialog.AreaType), "COUNTY" } }, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is AreaItem newCounty)
+            await OnAddNewCounty.InvokeAsync(newCounty);
+    }
+
+    private static decimal? ParseNullableDecimal(string? value) =>
+        decimal.TryParse(value, out var d) ? d : null;
+}

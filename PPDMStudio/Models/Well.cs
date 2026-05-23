@@ -15,12 +15,11 @@ namespace PPDMStudio.Models
         public string? ASSIGNED_FIELD { get; set; }
         public string? CURRENT_STATUS { get; set; }
         public string? PROFILE_TYPE { get; set; }
-        public string? SPUD_DATE { get; set; }
-        public double? SURFACE_LATITUDE { get; set; }
-        public double? SURFACE_LONGITUDE { get; set; }
+        public DateTime? SPUD_DATE { get; set; }
+        public decimal? SURFACE_LATITUDE { get; set; }
+        public decimal? SURFACE_LONGITUDE { get; set; }
         // From WELL_LOCATION
         public string? COUNTY { get; set; }
         public string? STATE { get; set; }
-        public string? COUNTRY { get; set; }
     }
 }

@@ -7,7 +7,6 @@
         public string? OPERATOR { get; set; }
         public string? CURRENT_STATUS { get; set; }
         public string? PROFILE_TYPE { get; set; }
-        public string? ENVIRONMENT_TYPE { get; set; }
         public string? DEPTH_DATUM { get; set; }
         public decimal? KB_ELEV { get; set; }
         public decimal? GROUND_ELEV { get; set; }
@@ -25,7 +24,6 @@
         public decimal? BOTTOM_HOLE_LONGITUDE { get; set; }
         public string? REMARK { get; set; }
         // From WELL_AREA
-        public string? COUNTRY { get; set; }
         public string? STATE { get; set; }
         public string? COUNTY { get; set; }
     }

@@ -41,11 +41,6 @@
                       Placeholder="e.g. TX"
                       Adornment="Adornment.End"
                       AdornmentIcon="@Icons.Material.Filled.Search" />
-        <MudTextField @bind-Value="filter.Country"
-                      Label="Country"
-                      Placeholder="e.g. USA%"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@Icons.Material.Filled.Search" />
 
         <MudStack Row="true" Spacing="2" Class="mt-4">
             <MudButton Variant="Variant.Filled"
@@ -74,7 +69,8 @@
            Width="800px">
     <WellHeaderPanel IsOpen="headerOpen"
                      UWI="@selectedUWI"
-                     OnClose="CloseWellHeader" />
+                     OnClose="CloseWellHeader" 
+                     OnSaved="OnWellHeaderSaved" />
 </MudDrawer>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
@@ -143,7 +139,6 @@
             <MudTh>Spud Date</MudTh>
             <MudTh>County</MudTh>
             <MudTh>State</MudTh>
-            <MudTh>Country</MudTh>
             <MudTh>Latitude</MudTh>
             <MudTh>Longitude</MudTh>
         </HeaderContent>
@@ -155,7 +150,6 @@
             <MudTd>@context.SPUD_DATE</MudTd>
             <MudTd>@context.COUNTY</MudTd>
             <MudTd>@context.STATE</MudTd>
-            <MudTd>@context.COUNTRY</MudTd>
             <MudTd>@context.SURFACE_LATITUDE</MudTd>
             <MudTd>@context.SURFACE_LONGITUDE</MudTd>
         </RowTemplate>
@@ -357,6 +351,26 @@
             await LoadWellLists();
             await LoadData();
             Snackbar.Add("Well List deleted.", Severity.Success);
+        }
+    }
+
+    private void OnWellHeaderSaved(WellHeader updated)
+    {
+        if (wells == null) return;
+
+        var list = wells.ToList();
+        var index = list.FindIndex(w => w.UWI == updated.UWI);
+        if (index >= 0)
+        {
+            list[index].WELL_NAME = updated.WELL_NAME;
+            list[index].OPERATOR = updated.OPERATOR;
+            list[index].SPUD_DATE = updated.SPUD_DATE;
+            list[index].SURFACE_LATITUDE = updated.SURFACE_LATITUDE;
+            list[index].SURFACE_LONGITUDE = updated.SURFACE_LONGITUDE;
+            list[index].COUNTY = updated.COUNTY;
+            list[index].STATE = updated.STATE;
+            wells = list;
+            StateHasChanged();
         }
     }
 }

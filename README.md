@@ -8,7 +8,7 @@ A modern desktop application for viewing and editing **PPDM (Professional Petrol
 
 ## Features
 - 🗂️ **Project management** — manage multiple PPDM database connections with secure credential storage
-- 🔍 **Well search and filtering** — filter by UWI, Well Name, Operator, Field, County, State and Country
+- 🔍 **Well search and filtering** — filter by UWI, Well Name, Operator, Field, County and State
 - 📋 **Well lists** — create, save and manage named sets of wells, supports 100,000+ wells
 - 💾 **Remembers your workspace** — last selected project and well list restored on startup
 - 🔒 **Secure** — passwords stored in Windows Credential Manager, never in plain text

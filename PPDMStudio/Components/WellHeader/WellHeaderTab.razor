@@ -1,0 +1,146 @@
+﻿@* Components/WellHeader/WellHeaderTab.razor *@
+
+@* IDENTIFICATION *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
+    IDENTIFICATION
+</MudText>
+<MudGrid Spacing="1" Class="mb-4">
+    <MudItem xs="12">
+        <EditableField Label="Well Name"
+                       Value="@EditCopy.WELL_NAME"
+                       ValueChanged="v => { EditCopy.WELL_NAME = v; OnFieldChanged.InvokeAsync(); }" />
+    </MudItem>
+    <MudItem xs="12">
+        <ReferenceSelect Label="Operator"
+                         Value="@EditCopy.OPERATOR"
+                         ValueChanged="v => { EditCopy.OPERATOR = v; OnFieldChanged.InvokeAsync(); }"
+                         Options="@Operators"
+                         OnAddNew="OnAddOperator" />
+    </MudItem>
+    <MudItem xs="6">
+        <ReferenceSelect Label="Current Status"
+                         Value="@EditCopy.CURRENT_STATUS"
+                         ValueChanged="v => { EditCopy.CURRENT_STATUS = v; OnFieldChanged.InvokeAsync(); }"
+                         Options="@Statuses"
+                         OnAddNew="OnAddStatus" />
+    </MudItem>
+    <MudItem xs="6">
+        <ReferenceSelect Label="Profile Type"
+                         Value="@EditCopy.PROFILE_TYPE"
+                         ValueChanged="v => { EditCopy.PROFILE_TYPE = v; OnFieldChanged.InvokeAsync(); }"
+                         Options="@ProfileTypes"
+                         OnAddNew="OnAddProfileType" />
+    </MudItem>
+</MudGrid>
+
+@* DATES *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">DATES</MudText>
+<div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
+    <div style="width:130px; min-width:130px;">
+        <EditableDateField Label="Spud Date"
+                           Value="@EditCopy.SPUD_DATE"
+                           ValueChanged="v => { EditCopy.SPUD_DATE = v; OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:130px; min-width:130px;">
+        <EditableDateField Label="Final Drill"
+                           Value="@EditCopy.FINAL_DRILL_DATE"
+                           ValueChanged="v => { EditCopy.FINAL_DRILL_DATE = v; OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:130px; min-width:130px;">
+        <EditableDateField Label="Completion"
+                           Value="@EditCopy.COMPLETION_DATE"
+                           ValueChanged="v => { EditCopy.COMPLETION_DATE = v; OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:130px; min-width:130px;">
+        <EditableDateField Label="Abandonment"
+                           Value="@EditCopy.ABANDONMENT_DATE"
+                           ValueChanged="v => { EditCopy.ABANDONMENT_DATE = v; OnFieldChanged.InvokeAsync(); }" />
+    </div>
+</div>
+
+@* DEPTHS *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">DEPTHS</MudText>
+<div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
+    <div style="width:120px; min-width:120px;">
+        <EditableField Label="Final TD"
+                       Value="@EditCopy.FINAL_TD?.ToString()"
+                       ValueChanged="v => { EditCopy.FINAL_TD = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:120px; min-width:120px;">
+        <EditableField Label="Log TD"
+                       Value="@EditCopy.LOG_TD?.ToString()"
+                       ValueChanged="v => { EditCopy.LOG_TD = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:120px; min-width:120px;">
+        <EditableField Label="Drill TD"
+                       Value="@EditCopy.DRILL_TD?.ToString()"
+                       ValueChanged="v => { EditCopy.DRILL_TD = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:120px; min-width:120px;">
+        <EditableField Label="Max TVD"
+                       Value="@EditCopy.MAX_TVD?.ToString()"
+                       ValueChanged="v => { EditCopy.MAX_TVD = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+</div>
+
+@* ELEVATIONS *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">ELEVATIONS</MudText>
+<div style="display:flex; gap:16px; flex-wrap:nowrap; margin-bottom:16px;">
+    <div style="width:140px; min-width:140px;">
+        <EditableField Label="Depth Datum"
+                       Value="@EditCopy.DEPTH_DATUM"
+                       ValueChanged="v => { EditCopy.DEPTH_DATUM = v; OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:120px; min-width:120px;">
+        <EditableField Label="KB Elevation"
+                       Value="@EditCopy.KB_ELEV?.ToString()"
+                       ValueChanged="v => { EditCopy.KB_ELEV = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+    <div style="width:140px; min-width:140px;">
+        <EditableField Label="Ground Elevation"
+                       Value="@EditCopy.GROUND_ELEV?.ToString()"
+                       ValueChanged="v => { EditCopy.GROUND_ELEV = ParseNullableDecimal(v); OnFieldChanged.InvokeAsync(); }" />
+    </div>
+</div>
+
+@* REMARKS *@
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">REMARKS</MudText>
+@if (remarkEditing)
+{
+    <MudTextField T="string"
+                  Value="@EditCopy.REMARK"
+                  ValueChanged="v => { EditCopy.REMARK = v; OnFieldChanged.InvokeAsync(); }"
+                  Label="Remark"
+                  Variant="Variant.Outlined"
+                  Lines="4"
+                  AutoFocus="true"
+                  Style="width:100%"
+                  OnBlur="() => remarkEditing = false" />
+}
+else
+{
+    <MudField Label="Remark" Variant="Variant.Text"
+              Style="white-space:pre-wrap; min-height:80px; cursor:pointer;"
+              @onclick="() => remarkEditing = true">
+        @(string.IsNullOrWhiteSpace(EditCopy.REMARK) ? "Click to edit…" : EditCopy.REMARK)
+    </MudField>
+}
+
+@code {
+    [Parameter, EditorRequired] public WellHeader EditCopy { get; set; } = new();
+    [Parameter, EditorRequired] public EventCallback OnFieldChanged { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<string> Operators { get; set; } = Enumerable.Empty<string>();
+    [Parameter, EditorRequired] public IEnumerable<string> Statuses { get; set; } = Enumerable.Empty<string>();
+    [Parameter, EditorRequired] public IEnumerable<string> ProfileTypes { get; set; } = Enumerable.Empty<string>();
+    [Parameter, EditorRequired] public EventCallback<string> OnAddOperator { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnAddStatus { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnAddProfileType { get; set; }
+
+    private bool remarkEditing = false;
+
+    // Called by parent on CancelChanges to reset local UI state
+    public void ResetState() => remarkEditing = false;
+
+    private static decimal? ParseNullableDecimal(string? value) =>
+        decimal.TryParse(value, out var d) ? d : null;
+}

@@ -1,0 +1,37 @@
+﻿@* EditableDateField.razor *@
+<div @onclick="Activate" style="cursor:pointer; width:100%;">
+    @if (isEditing)
+    {
+        <MudDatePicker Label="@Label"
+                       Date="@Value"
+                       DateChanged="OnValueChanged"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       AutoClose="true"
+                       Editable="true"
+                       DateFormat="yyyy-MM-dd"
+                       Style="width:100%" />
+    }
+    else
+    {
+        <MudField Label="@Label" Variant="Variant.Text">
+            @(Value?.ToString("yyyy-MM-dd") ?? "—")
+        </MudField>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public DateTime? Value { get; set; }
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+
+    private bool isEditing = false;
+
+    private void Activate() => isEditing = true;
+
+    private async Task OnValueChanged(DateTime? v)
+    {
+        isEditing = false;
+        await ValueChanged.InvokeAsync(v);
+    }
+}

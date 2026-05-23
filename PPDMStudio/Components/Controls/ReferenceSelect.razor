@@ -1,0 +1,101 @@
+﻿<div style="display:flex; align-items:flex-end; gap:4px;">
+    <div style="flex:1">
+        <MudSelect T="string"
+                   Label="@Label"
+                   Value="@Value"
+                   ValueChanged="ValueChanged"
+                   Variant="Variant.Text"
+                   Dense="true"
+                   Margin="Margin.Dense"
+                   AnchorOrigin="Origin.BottomLeft">
+            @foreach (var option in Options)
+            {
+                <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+
+    @if (OnAddNew.HasDelegate)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                       Size="Size.Small"
+                       Color="Color.Primary"
+                       Title="@($"Add new {Label}")"
+                       OnClick="ToggleAddForm" />
+    }
+</div>
+
+@if (addFormOpen)
+{
+    <MudPaper Elevation="2" Class="pa-2 mt-1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudTextField @bind-Value="newValue"
+                          Label="@($"New {Label}")"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          AutoFocus="true"
+                          Immediate="true"
+                          Style="flex:1"
+                          OnKeyDown="OnKeyDown" />
+            <MudIconButton Icon="@Icons.Material.Filled.Check"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           Disabled="@(string.IsNullOrWhiteSpace(newValue) || isSaving)"
+                           OnClick="Confirm" />
+            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                           Size="Size.Small"
+                           OnClick="Cancel" />
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string? Value { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<string> Options { get; set; } = Enumerable.Empty<string>();
+    [Parameter] public EventCallback<string> OnAddNew { get; set; }
+
+    private bool addFormOpen = false;
+    private bool isSaving = false;
+    private string newValue = string.Empty;
+
+    private void ToggleAddForm()
+    {
+        newValue = string.Empty;
+        addFormOpen = !addFormOpen;
+    }
+
+    private void Cancel()
+    {
+        addFormOpen = false;
+        newValue = string.Empty;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newValue))
+            await Confirm();
+        else if (e.Key == "Escape")
+            Cancel();
+    }
+
+    private async Task Confirm()
+    {
+        var trimmed = newValue.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed)) return;
+
+        try
+        {
+            isSaving = true;
+            await OnAddNew.InvokeAsync(trimmed);
+            await ValueChanged.InvokeAsync(trimmed);
+            addFormOpen = false;
+            newValue = string.Empty;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}
