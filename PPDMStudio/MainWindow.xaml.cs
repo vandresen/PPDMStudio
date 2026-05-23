@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using PPDMStudio.Services;
 using PPDMStudio.Services.PPDMStudio.Services;
+using System.Diagnostics;
 using System.Windows;
 
 namespace PPDMStudio
@@ -38,6 +39,24 @@ namespace PPDMStudio
                 Selector = "#app",
                 ComponentType = typeof(PPDMStudio.Components.App)
             });
+        }
+
+        private void HelpUserGuide_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/vandresen/PPDMStudio/docs/UserGuide.md",
+                UseShellExecute = true
+            });
+        }
+
+        private void HelpAbout_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                "PPDMStudio v1.0\n\nA PPDM well data editor.\n\nhttps://github.com/vandresen/PPDMStudio",
+                "About PPDMStudio",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
     }
 }

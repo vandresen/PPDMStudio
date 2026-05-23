@@ -6,6 +6,19 @@
         WindowState="Maximized">
 
     <Grid>
-        <blazor:BlazorWebView x:Name="blazorWebView" HostPage="wwwroot\index.html" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="Help">
+                <MenuItem Header="User Guide" Click="HelpUserGuide_Click" />
+                <Separator />
+                <MenuItem Header="About PPDMStudio" Click="HelpAbout_Click" />
+            </MenuItem>
+        </Menu>
+
+        <blazor:BlazorWebView Grid.Row="1" x:Name="blazorWebView" HostPage="wwwroot\index.html" />
     </Grid>
 </Window>
