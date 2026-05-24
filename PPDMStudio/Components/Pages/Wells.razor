@@ -69,7 +69,7 @@
            Width="800px">
     <WellHeaderPanel IsOpen="headerOpen"
                      UWI="@selectedUWI"
-                     OnClose="CloseWellHeader" 
+                     OnClose="CloseWellHeader"
                      OnSaved="OnWellHeaderSaved" />
 </MudDrawer>
 
@@ -148,7 +148,7 @@
             <MudTd>@context.OPERATOR</MudTd>
             <MudTd>@context.ASSIGNED_FIELD</MudTd>
             <MudTd>@context.SPUD_DATE</MudTd>
-            <MudTd>@context.COUNTY</MudTd>
+            <MudTd>@context.COUNTY_NAME</MudTd>
             <MudTd>@context.STATE</MudTd>
             <MudTd>@context.SURFACE_LATITUDE</MudTd>
             <MudTd>@context.SURFACE_LONGITUDE</MudTd>
@@ -184,6 +184,7 @@
 
     private void OnRowClick(TableRowClickEventArgs<Well> args)
     {
+        if (args.Item is null) return;
         selectedUWI = args.Item.UWI;
         headerOpen = true;
     }
@@ -364,10 +365,12 @@
         {
             list[index].WELL_NAME = updated.WELL_NAME;
             list[index].OPERATOR = updated.OPERATOR;
+            list[index].ASSIGNED_FIELD = updated.ASSIGNED_FIELD;
             list[index].SPUD_DATE = updated.SPUD_DATE;
             list[index].SURFACE_LATITUDE = updated.SURFACE_LATITUDE;
             list[index].SURFACE_LONGITUDE = updated.SURFACE_LONGITUDE;
             list[index].COUNTY = updated.COUNTY;
+            list[index].COUNTY_NAME = null; // refreshed on next load
             list[index].STATE = updated.STATE;
             wells = list;
             StateHasChanged();

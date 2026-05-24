@@ -33,11 +33,12 @@
                     </MudField>
                 }
             </div>
-            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                           Size="Size.Small"
-                           Color="Color.Primary"
-                           Title="Add new state"
-                           OnClick="OpenAddStateDialog" />
+            <MudTooltip Text="Add new state">
+                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               OnClick="OpenAddStateDialog" />
+            </MudTooltip>
         </div>
     </MudItem>
 </MudGrid>
@@ -81,12 +82,13 @@
                     </MudField>
                 }
             </div>
-            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                           Size="Size.Small"
-                           Color="Color.Primary"
-                           Title="Add new county"
-                           Disabled="@(SelectedState == null)"
-                           OnClick="OpenAddCountyDialog" />
+            <MudTooltip Text="Add new county">
+                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               Disabled="@(SelectedState == null)"
+                               OnClick="OpenAddCountyDialog" />
+            </MudTooltip>
         </div>
     </MudItem>
 </MudGrid>
@@ -184,3 +186,4 @@
     private static decimal? ParseNullableDecimal(string? value) =>
         decimal.TryParse(value, out var d) ? d : null;
 }
+

@@ -17,6 +17,13 @@
                          Options="@Operators"
                          OnAddNew="OnAddOperator" />
     </MudItem>
+    <MudItem xs="12">
+        <ReferenceSelect Label="Assigned Field"
+                         Value="@EditCopy.ASSIGNED_FIELD"
+                         ValueChanged="v => { EditCopy.ASSIGNED_FIELD = v; OnFieldChanged.InvokeAsync(); }"
+                         Options="@Fields"
+                         OnAddNew="OnAddField" />
+    </MudItem>
     <MudItem xs="6">
         <ReferenceSelect Label="Current Status"
                          Value="@EditCopy.CURRENT_STATUS"
@@ -130,9 +137,11 @@ else
     [Parameter, EditorRequired] public WellHeader EditCopy { get; set; } = new();
     [Parameter, EditorRequired] public EventCallback OnFieldChanged { get; set; }
     [Parameter, EditorRequired] public IEnumerable<string> Operators { get; set; } = Enumerable.Empty<string>();
+    [Parameter, EditorRequired] public IEnumerable<string> Fields { get; set; } = Enumerable.Empty<string>();
     [Parameter, EditorRequired] public IEnumerable<string> Statuses { get; set; } = Enumerable.Empty<string>();
     [Parameter, EditorRequired] public IEnumerable<string> ProfileTypes { get; set; } = Enumerable.Empty<string>();
     [Parameter, EditorRequired] public EventCallback<string> OnAddOperator { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnAddField { get; set; }
     [Parameter, EditorRequired] public EventCallback<string> OnAddStatus { get; set; }
     [Parameter, EditorRequired] public EventCallback<string> OnAddProfileType { get; set; }
 
@@ -144,3 +153,4 @@ else
     private static decimal? ParseNullableDecimal(string? value) =>
         decimal.TryParse(value, out var d) ? d : null;
 }
+

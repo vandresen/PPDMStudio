@@ -20,6 +20,7 @@ namespace PPDMStudio.Models
         public decimal? SURFACE_LONGITUDE { get; set; }
         // From WELL_LOCATION
         public string? COUNTY { get; set; }
+        public string? COUNTY_NAME { get; set; }
         public string? STATE { get; set; }
     }
 }

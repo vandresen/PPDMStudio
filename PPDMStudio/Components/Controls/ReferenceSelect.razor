@@ -17,11 +17,12 @@
 
     @if (OnAddNew.HasDelegate)
     {
-        <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                       Size="Size.Small"
-                       Color="Color.Primary"
-                       Title="@($"Add new {Label}")"
-                       OnClick="ToggleAddForm" />
+        <MudTooltip Text="@($"Add new {Label}")">
+            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="ToggleAddForm" />
+        </MudTooltip>
     }
 </div>
 
@@ -99,3 +100,4 @@
         }
     }
 }
+

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  
 ---
  
+## [1.1.0] - 2026-05-24
+ 
+### Added
+ 
+- **Assigned Field** — field is now displayed in the well grid and editable in the well header panel, backed by the PPDM `FIELD` reference table
+### Fixed
+ 
+- **County display** — well grid now shows the county name instead of the FIPS code
+- **MudBlazor analyzer warnings** — replaced illegal `Title` attributes on `MudIconButton` with `MudTooltip` wrappers across `WellHeaderPanel`, `WellLocationTab`, and `ReferenceSelect`
+- **MudBlazor analyzer warning** — removed illegal `PanelClass` attribute from `MudTabs`; padding moved to individual `MudTabPanel` elements
+- **Null reference warning** — added null guard on `args.Item` in `OnRowClick`
+---
+ 
 ## [1.0.0] - 2026-05-23
  
 Initial release.

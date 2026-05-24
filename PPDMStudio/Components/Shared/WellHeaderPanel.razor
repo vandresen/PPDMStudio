@@ -13,16 +13,19 @@
             <MudText Typo="Typo.h6" Style="flex:1">@wellHeader.UWI</MudText>
             @if (isDirty)
             {
-                <MudIconButton Icon="@Icons.Material.Filled.Save"
-                               Size="Size.Small"
-                               Color="Color.Primary"
-                               Title="Save changes"
-                               OnClick="SaveChanges" />
-                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                               Size="Size.Small"
-                               Color="Color.Default"
-                               Title="Discard changes"
-                               OnClick="CancelChanges" />
+                <MudTooltip Text="Save changes">
+                    <MudIconButton Icon="@Icons.Material.Filled.Save"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="SaveChanges" />
+                </MudTooltip>
+                <MudTooltip Text="Discard changes">
+                    <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="CancelChanges" />
+                </MudTooltip>
+
             }
             <MudIconButton Icon="@Icons.Material.Filled.Close"
                            Size="Size.Small"
@@ -37,21 +40,23 @@
         }
         else
         {
-            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-3">
+            <MudTabs Elevation="0" Rounded="false">
 
-                <MudTabPanel Text="Well Header">
+                <MudTabPanel Text="Well Header" Class="pt-3">
                     <WellHeaderTab @ref="wellHeaderTab"
                                    EditCopy="editCopy"
                                    OnFieldChanged="MarkDirty"
                                    Operators="operators"
+                                   Fields="fields"
                                    Statuses="statuses"
                                    ProfileTypes="profileTypes"
                                    OnAddOperator="AddOperator"
+                                   OnAddField="AddField"
                                    OnAddStatus="AddStatus"
                                    OnAddProfileType="AddProfileType" />
                 </MudTabPanel>
 
-                <MudTabPanel Text="Location">
+                <MudTabPanel Text="Location" Class="pt-3">
                     <WellLocationTab @ref="wellLocationTab"
                                      EditCopy="editCopy"
                                      OnFieldChanged="MarkDirty"
@@ -88,6 +93,7 @@
     private WellLocationTab? wellLocationTab;
 
     private IEnumerable<string> operators = Enumerable.Empty<string>();
+    private IEnumerable<string> fields = Enumerable.Empty<string>();
     private IEnumerable<string> statuses = Enumerable.Empty<string>();
     private IEnumerable<string> profileTypes = Enumerable.Empty<string>();
 
@@ -115,14 +121,16 @@
 
             var refTasks = new[]
             {
-            WellService.GetReferenceValuesAsync(cs, "BUSINESS_ASSOCIATE", "BUSINESS_ASSOCIATE_ID"),
-            WellService.GetReferenceValuesAsync(cs, "R_WELL_STATUS",      "STATUS"),
-            WellService.GetReferenceValuesAsync(cs, "R_WELL_PROFILE_TYPE","WELL_PROFILE_TYPE"),
-        };
+                WellService.GetReferenceValuesAsync(cs, "BUSINESS_ASSOCIATE", "BUSINESS_ASSOCIATE_ID"),
+                WellService.GetReferenceValuesAsync(cs, "FIELD",              "FIELD_ID"),
+                WellService.GetReferenceValuesAsync(cs, "R_WELL_STATUS",      "STATUS"),
+                WellService.GetReferenceValuesAsync(cs, "R_WELL_PROFILE_TYPE","WELL_PROFILE_TYPE"),
+            };
             var results = await Task.WhenAll(refTasks);
             operators = results[0];
-            statuses = results[1];
-            profileTypes = results[2];
+            fields = results[1];
+            statuses = results[2];
+            profileTypes = results[3];
 
             // Always reset first, then load if values exist
             selectedState = null;
@@ -240,6 +248,14 @@
         Snackbar.Add($"Operator '{name}' added.", Severity.Success);
     }
 
+    private async Task AddField(string name)
+    {
+        var cs = GetConnectionString();
+        await WellService.AddReferenceValueAsync(cs, "FIELD", "FIELD_ID", name);
+        fields = await WellService.GetReferenceValuesAsync(cs, "FIELD", "FIELD_ID");
+        Snackbar.Add($"Field '{name}' added.", Severity.Success);
+    }
+
     private async Task AddStatus(string name)
     {
         var cs = GetConnectionString();
@@ -294,35 +310,34 @@
         MarkDirty();
     }
 
-
-
     private static decimal? ParseNullableDecimal(string? value) =>
         decimal.TryParse(value, out var d) ? d : null;
 
     private WellHeader CopyHeader(WellHeader src) => new WellHeader
     {
-        UWI                   = src.UWI,
-        WELL_NAME             = src.WELL_NAME,
-        OPERATOR              = src.OPERATOR,
-        CURRENT_STATUS        = src.CURRENT_STATUS,
-        PROFILE_TYPE          = src.PROFILE_TYPE,
-        DEPTH_DATUM           = src.DEPTH_DATUM,
-        KB_ELEV               = src.KB_ELEV,
-        GROUND_ELEV           = src.GROUND_ELEV,
-        FINAL_TD              = src.FINAL_TD,
-        LOG_TD                = src.LOG_TD,
-        DRILL_TD              = src.DRILL_TD,
-        MAX_TVD               = src.MAX_TVD,
-        SPUD_DATE             = src.SPUD_DATE,
-        FINAL_DRILL_DATE      = src.FINAL_DRILL_DATE,
-        COMPLETION_DATE       = src.COMPLETION_DATE,
-        ABANDONMENT_DATE      = src.ABANDONMENT_DATE,
-        SURFACE_LATITUDE      = src.SURFACE_LATITUDE,
-        SURFACE_LONGITUDE     = src.SURFACE_LONGITUDE,
-        BOTTOM_HOLE_LATITUDE  = src.BOTTOM_HOLE_LATITUDE,
+        UWI = src.UWI,
+        WELL_NAME = src.WELL_NAME,
+        ASSIGNED_FIELD = src.ASSIGNED_FIELD,
+        OPERATOR = src.OPERATOR,
+        CURRENT_STATUS = src.CURRENT_STATUS,
+        PROFILE_TYPE = src.PROFILE_TYPE,
+        DEPTH_DATUM = src.DEPTH_DATUM,
+        KB_ELEV = src.KB_ELEV,
+        GROUND_ELEV = src.GROUND_ELEV,
+        FINAL_TD = src.FINAL_TD,
+        LOG_TD = src.LOG_TD,
+        DRILL_TD = src.DRILL_TD,
+        MAX_TVD = src.MAX_TVD,
+        SPUD_DATE = src.SPUD_DATE,
+        FINAL_DRILL_DATE = src.FINAL_DRILL_DATE,
+        COMPLETION_DATE = src.COMPLETION_DATE,
+        ABANDONMENT_DATE = src.ABANDONMENT_DATE,
+        SURFACE_LATITUDE = src.SURFACE_LATITUDE,
+        SURFACE_LONGITUDE = src.SURFACE_LONGITUDE,
+        BOTTOM_HOLE_LATITUDE = src.BOTTOM_HOLE_LATITUDE,
         BOTTOM_HOLE_LONGITUDE = src.BOTTOM_HOLE_LONGITUDE,
-        REMARK                = src.REMARK,
-        STATE                 = src.STATE,
-        COUNTY                = src.COUNTY
+        REMARK = src.REMARK,
+        STATE = src.STATE,
+        COUNTY = src.COUNTY
     };
 }

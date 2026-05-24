@@ -45,7 +45,7 @@ namespace PPDMStudio
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://github.com/vandresen/PPDMStudio/docs/UserGuide.md",
+                FileName = "https://github.com/vandresen/PPDMStudio/blob/master/PPDMStudio/Docs/UserGuide.md",
                 UseShellExecute = true
             });
         }

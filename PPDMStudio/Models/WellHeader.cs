@@ -4,6 +4,7 @@
     {
         public string UWI { get; set; } = string.Empty;
         public string? WELL_NAME { get; set; }
+        public string? ASSIGNED_FIELD { get; set; }
         public string? OPERATOR { get; set; }
         public string? CURRENT_STATUS { get; set; }
         public string? PROFILE_TYPE { get; set; }
