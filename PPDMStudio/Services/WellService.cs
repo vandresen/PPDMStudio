@@ -17,6 +17,7 @@ namespace PPDMStudio.Services
         Task AddAreaAsync(string connectionString, string areaType, string areaId, string preferredName);
         Task<IEnumerable<AreaItem>> SearchCountiesAsync(string connectionString, string stateAreaId, string search);
         Task AddCountyAsync(string connectionString, string areaId, string preferredName, string parentStateAreaId);
+        Task<bool> InsertWellAsync(string connectionString, WellHeader header);
     }
 
     public class WellService : IWellService
@@ -332,6 +333,122 @@ namespace PPDMStudio.Services
             catch
             {
                 tx.Rollback();
+                throw;
+            }
+        }
+
+        public async Task<bool> InsertWellAsync(string connectionString, WellHeader header)
+        {
+            using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var inserted = await connection.ExecuteScalarAsync<int>("""
+            IF NOT EXISTS (SELECT 1 FROM WELL WHERE UWI = @UWI)
+            BEGIN
+                INSERT INTO WELL (
+                    UWI,
+                    WELL_NAME,
+                    OPERATOR,
+                    ASSIGNED_FIELD,
+                    CURRENT_STATUS,
+                    PROFILE_TYPE,
+                    DEPTH_DATUM,
+                    KB_ELEV,
+                    GROUND_ELEV,
+                    FINAL_TD,
+                    LOG_TD,
+                    DRILL_TD,
+                    MAX_TVD,
+                    SPUD_DATE,
+                    FINAL_DRILL_DATE,
+                    COMPLETION_DATE,
+                    ABANDONMENT_DATE,
+                    SURFACE_LATITUDE,
+                    SURFACE_LONGITUDE,
+                    BOTTOM_HOLE_LATITUDE,
+                    BOTTOM_HOLE_LONGITUDE,
+                    REMARK,
+                    ROW_CREATED_BY,
+                    ROW_CREATED_DATE,
+                    ROW_CHANGED_BY,
+                    ROW_CHANGED_DATE
+                ) VALUES (
+                    @UWI,
+                    @WELL_NAME,
+                    @OPERATOR,
+                    @ASSIGNED_FIELD,
+                    @CURRENT_STATUS,
+                    @PROFILE_TYPE,
+                    @DEPTH_DATUM,
+                    @KB_ELEV,
+                    @GROUND_ELEV,
+                    @FINAL_TD,
+                    @LOG_TD,
+                    @DRILL_TD,
+                    @MAX_TVD,
+                    @SPUD_DATE,
+                    @FINAL_DRILL_DATE,
+                    @COMPLETION_DATE,
+                    @ABANDONMENT_DATE,
+                    @SURFACE_LATITUDE,
+                    @SURFACE_LONGITUDE,
+                    @BOTTOM_HOLE_LATITUDE,
+                    @BOTTOM_HOLE_LONGITUDE,
+                    @REMARK,
+                    @AuditUser,
+                    @AuditDate,
+                    @AuditUser,
+                    @AuditDate
+                )
+                SELECT 1
+            END
+            ELSE
+                SELECT 0
+            """,
+                    new
+                    {
+                        header.UWI,
+                        header.WELL_NAME,
+                        header.OPERATOR,
+                        header.ASSIGNED_FIELD,
+                        header.CURRENT_STATUS,
+                        header.PROFILE_TYPE,
+                        header.DEPTH_DATUM,
+                        header.KB_ELEV,
+                        header.GROUND_ELEV,
+                        header.FINAL_TD,
+                        header.LOG_TD,
+                        header.DRILL_TD,
+                        header.MAX_TVD,
+                        header.SPUD_DATE,
+                        header.FINAL_DRILL_DATE,
+                        header.COMPLETION_DATE,
+                        header.ABANDONMENT_DATE,
+                        header.SURFACE_LATITUDE,
+                        header.SURFACE_LONGITUDE,
+                        header.BOTTOM_HOLE_LATITUDE,
+                        header.BOTTOM_HOLE_LONGITUDE,
+                        header.REMARK,
+                        AuditUser,
+                        AuditDate = DateTime.UtcNow
+                    },
+                    transaction);
+
+                if (inserted == 1)
+                {
+                    await UpsertWellArea(connection, transaction, header.UWI, "STATE", header.STATE);
+                    await UpsertWellArea(connection, transaction, header.UWI, "COUNTY", header.COUNTY);
+                }
+
+                transaction.Commit();
+                return inserted == 1;
+            }
+            catch
+            {
+                transaction.Rollback();
                 throw;
             }
         }

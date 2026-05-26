@@ -73,6 +73,14 @@
                      OnSaved="OnWellHeaderSaved" />
 </MudDrawer>
 
+<MudDrawer @bind-Open="importOpen" Anchor="Anchor.Right"
+           Elevation="2" Variant="DrawerVariant.Temporary"
+           Width="500px">
+    <CsvImportPanel IsOpen="importOpen"
+                    OnClose="@(() => importOpen = false)"
+                    OnImported="OnWellsImported" />
+</MudDrawer>
+
 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
     <MudSelect T="WellList"
                Label="Well List"
@@ -109,6 +117,13 @@
     }
 
     <MudSpacer />
+
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Secondary"
+               StartIcon="@Icons.Material.Filled.Upload"
+               OnClick="@(() => importOpen = true)">
+        Import CSV
+    </MudButton>
 
     <MudButton Variant="Variant.Filled"
                Color="Color.Primary"
@@ -181,6 +196,7 @@
     private WellList? nullWellList = null;
     private bool headerOpen = false;
     private string? selectedUWI;
+    private bool importOpen = false;
 
     private void OnRowClick(TableRowClickEventArgs<Well> args)
     {
@@ -375,5 +391,28 @@
             wells = list;
             StateHasChanged();
         }
+    }
+
+    private async Task OnWellsImported((List<string> Uwis, bool AddToList) result)
+    {
+        importOpen = false;
+
+        if (result.AddToList && result.Uwis.Any())
+        {
+            if (selectedWellList != null)
+            {
+                // Add directly to the currently open Well List
+                await WellListService.AddWellsToListAsync(selectedWellList.Id, result.Uwis);
+                await LoadWellLists();
+                Snackbar.Add($"{result.Uwis.Count} wells added to '{selectedWellList.Name}'.", Severity.Success);
+            }
+            else
+            {
+                // No list open — fall back to prompting for a name
+                await SaveWellsToList(result.Uwis);
+            }
+        }
+
+        await LoadData();
     }
 }

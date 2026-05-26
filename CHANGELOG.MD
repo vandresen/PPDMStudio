@@ -5,6 +5,17 @@ All notable changes to PPDMStudio will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
  
 ---
+
+## [1.2.0] - 2026-05-26
+
+### Added
+
+- **CSV well import** — new Import CSV wizard on the Wells page for loading well data from comma-delimited files into the PPDM `WELL` table
+  - Three-step wizard: file upload, column mapping, and preview before commit
+  - Auto-maps CSV columns whose names match PPDM field names
+  - User-defined column mapping for all supported `WELL` fields (UWI, name, operator, field, status, dates, depths, elevations, coordinates, state, county, remark)
+  - Duplicate UWIs (matched by UWI) are skipped and reported in the import summary
+  - Option to add imported wells directly to the currently open Well List
  
 ## [1.1.0] - 2026-05-24
  

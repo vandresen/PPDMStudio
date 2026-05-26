@@ -15,6 +15,7 @@ A modern desktop application for viewing and editing **PPDM (Professional Petrol
 - 📝 **Well header editing** — edit identification, dates, depths, elevations, and remarks
 - 📍 **Location management** — cascading state and county selection backed by the PPDM Area hierarchy
 - ➕ **Reference table management** — add new operators, statuses, profile types, states, and counties without leaving the panel
+- 📥 **CSV well import** — import well data from comma-delimited files with a three-step mapping wizard
 - 🏗️ **Built on PPDM 3.9 standard**
 ## Technology Stack
 - .NET 9 WPF + Blazor Hybrid
@@ -47,7 +48,7 @@ git clone https://github.com/vandresen/PPDMStudio.git
 - [ ] Cross sections
 - [ ] Map view
 - [ ] LAS file import
-- [ ] CSV import
+- [x] CSV import
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
  

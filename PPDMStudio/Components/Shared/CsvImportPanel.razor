@@ -1,0 +1,517 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@inject IProjectService ProjectService
+@inject IWellService WellService
+@inject ISnackbar Snackbar
+
+@* ── Step 1: Upload ── *@
+@if (step == 1)
+{
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Import CSV Wells</MudText>
+    </MudDrawerHeader>
+
+    <MudStack Class="pa-4" Spacing="4">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Select a comma-delimited (.csv) file containing well data.
+            The first row must be a header row.
+        </MudText>
+
+        <MudFileUpload T="IBrowserFile" Accept=".csv" FilesChanged="OnFileSelected" />
+
+        @if (!string.IsNullOrEmpty(fileName))
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">
+                @fileName — @rowCount rows detected
+            </MudAlert>
+        }
+
+        @if (parseError != null)
+        {
+            <MudAlert Severity="Severity.Error">@parseError</MudAlert>
+        }
+
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@(csvHeaders == null)"
+                       FullWidth="true"
+                       OnClick="GoToMapping">
+                Next: Map Columns
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       FullWidth="true"
+                       OnClick="Cancel">
+                Cancel
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}
+
+@* ── Step 2: Column Mapping ── *@
+@if (step == 2)
+{
+    <MudDrawerHeader>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Size="Size.Small"
+                           OnClick="@(() => step = 1)" />
+            <MudText Typo="Typo.h6">Map Columns</MudText>
+        </MudStack>
+    </MudDrawerHeader>
+
+    <MudStack Class="pa-4" Spacing="3">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Map each PPDM field to the matching column in your CSV.
+            UWI is required. All others are optional.
+        </MudText>
+
+        <MudTable T="PpdmFieldMapping" Items="mappings" Dense="true" Hover="false" Elevation="0">
+            <HeaderContent>
+                <MudTh>PPDM Field</MudTh>
+                <MudTh>CSV Column</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        @context.PpdmField
+                        @if (context.Required)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">required</MudChip>
+                        }
+                    </MudStack>
+                </MudTd>
+                <MudTd>
+                    <MudSelect T="string"
+                               Value="context.CsvColumn"
+                               ValueChanged="@(v => context.CsvColumn = v)"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Placeholder="(skip)">
+                        <MudSelectItem T="string" Value="@("")">(skip)</MudSelectItem>
+                        @foreach (var h in csvHeaders!)
+                        {
+                            <MudSelectItem T="string" Value="@h">@h</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        @if (mappingError != null)
+        {
+            <MudAlert Severity="Severity.Warning">@mappingError</MudAlert>
+        }
+
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       OnClick="GoToPreview">
+                Next: Preview
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       FullWidth="true"
+                       OnClick="Cancel">
+                Cancel
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}
+
+@* ── Step 3: Preview & Import ── *@
+@if (step == 3)
+{
+    <MudDrawerHeader>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Size="Size.Small"
+                           OnClick="@(() => step = 2)" />
+            <MudText Typo="Typo.h6">Preview & Import</MudText>
+        </MudStack>
+    </MudDrawerHeader>
+
+    <MudStack Class="pa-4" Spacing="3">
+        <MudAlert Severity="Severity.Info" Dense="true">
+            Showing first @previewRows.Count of @rowCount rows.
+            @duplicateCount duplicate UWIs will be skipped.
+        </MudAlert>
+
+        <div style="overflow-x:auto">
+            <MudTable T="Dictionary<string,string>" Items="previewRows"
+                      Dense="true" Hover="true" Striped="true" Elevation="0"
+                      Height="350px" FixedHeader="true">
+                <HeaderContent>
+                    @foreach (var m in ActiveMappings())
+                    {
+                        <MudTh>@m.PpdmField</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    @foreach (var m in ActiveMappings())
+                    {
+                        <MudTd>@(context.TryGetValue(m.CsvColumn!, out var v) ? v : "")</MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </div>
+
+        @if (isImporting)
+        {
+            <MudProgressLinear Indeterminate="true" />
+            <MudText Typo="Typo.body2" Align="Align.Center">Importing @importedCount of @rowCount wells…</MudText>
+        }
+
+        @if (importError != null)
+        {
+            <MudAlert Severity="Severity.Error">@importError</MudAlert>
+        }
+
+        <MudCheckBox @bind-Value="addToWellList" Label="Add imported wells to a Well List" Color="Color.Primary" />
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                       FullWidth="true"
+                       Disabled="isImporting"
+                       OnClick="RunImport">
+                Import @(rowCount - duplicateCount) Wells
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       FullWidth="true"
+                       Disabled="isImporting"
+                       OnClick="Cancel">
+                Cancel
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<(List<string> Uwis, bool AddToList)> OnImported { get; set; }
+
+    // ── wizard state ──
+    private int step = 1;
+
+    // ── step 1 ──
+    private string? fileName;
+    private string? parseError;
+    private List<string>? csvHeaders;
+    private List<Dictionary<string, string>> csvRows = new();
+    private int rowCount;
+
+    // ── step 2 ──
+    private string? mappingError;
+    private List<PpdmFieldMapping> mappings = new()
+    {
+        new("UWI",                 required: true),
+        new("WELL_NAME"),
+        new("OPERATOR"),
+        new("ASSIGNED_FIELD"),
+        new("CURRENT_STATUS"),
+        new("PROFILE_TYPE"),
+        new("SPUD_DATE"),
+        new("FINAL_DRILL_DATE"),
+        new("COMPLETION_DATE"),
+        new("ABANDONMENT_DATE"),
+        new("FINAL_TD"),
+        new("LOG_TD"),
+        new("DRILL_TD"),
+        new("MAX_TVD"),
+        new("KB_ELEV"),
+        new("GROUND_ELEV"),
+        new("DEPTH_DATUM"),
+        new("SURFACE_LATITUDE"),
+        new("SURFACE_LONGITUDE"),
+        new("BOTTOM_HOLE_LATITUDE"),
+        new("BOTTOM_HOLE_LONGITUDE"),
+        new("REMARK"),
+        new("STATE"),
+        new("COUNTY"),
+    };
+
+    // ── step 3 ──
+    private List<Dictionary<string, string>> previewRows = new();
+    private int duplicateCount;
+    private bool isImporting;
+    private int importedCount;
+    private string? importError;
+    private bool addToWellList = false;
+    private int skippedCount;
+
+    private async Task OnFileSelected(IBrowserFile file)
+    {
+        parseError = null;
+        csvHeaders = null;
+        csvRows.Clear();
+        fileName = null;
+
+        if (file == null) return;
+
+        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            parseError = "Please select a .csv file.";
+            return;
+        }
+
+        try
+        {
+            // Copy to MemoryStream first — IBrowserFile doesn't support sync reads
+            using var memoryStream = new System.IO.MemoryStream();
+            using var browserStream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+            await browserStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            using var reader = new System.IO.StreamReader(memoryStream);
+
+            var headerLine = await reader.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(headerLine))
+            {
+                parseError = "CSV file appears to be empty.";
+                return;
+            }
+
+            csvHeaders = ParseCsvLine(headerLine);
+
+            // Auto-map columns whose names match PPDM fields (case-insensitive)
+            foreach (var m in mappings)
+            {
+                var match = csvHeaders.FirstOrDefault(h =>
+                    h.Equals(m.PpdmField, StringComparison.OrdinalIgnoreCase));
+                if (match != null) m.CsvColumn = match;
+            }
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var values = ParseCsvLine(line);
+                var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < csvHeaders.Count; i++)
+                    row[csvHeaders[i]] = i < values.Count ? values[i] : "";
+                csvRows.Add(row);
+            }
+
+            fileName = file.Name;
+            rowCount = csvRows.Count;
+        }
+        catch (Exception ex)
+        {
+            parseError = $"Failed to read file: {ex.Message}";
+        }
+    }
+
+    private void GoToMapping()
+    {
+        mappingError = null;
+        step = 2;
+    }
+
+    private void GoToPreview()
+    {
+        mappingError = null;
+        var uwiMap = mappings.FirstOrDefault(m => m.PpdmField == "UWI");
+        if (uwiMap == null || string.IsNullOrEmpty(uwiMap.CsvColumn))
+        {
+            mappingError = "UWI mapping is required.";
+            return;
+        }
+
+        // Build preview (first 20 rows) and count duplicates
+        previewRows = csvRows.Take(20).ToList();
+
+        var uwiCol = uwiMap.CsvColumn!;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        duplicateCount = 0;
+        foreach (var row in csvRows)
+        {
+            var uwi = row.TryGetValue(uwiCol, out var v) ? v : "";
+            if (!seen.Add(uwi)) duplicateCount++;
+        }
+
+        step = 3;
+    }
+
+    private async Task RunImport()
+    {
+        importError = null;
+        isImporting = true;
+        importedCount = 0;
+        skippedCount = 0;
+
+        try
+        {
+            if (ProjectService.SelectedProject == null)
+                throw new InvalidOperationException("No project selected.");
+
+            var connectionString = ProjectService.SelectedProject.BuildConnectionString(
+                ProjectService.GetPassword(ProjectService.SelectedProject.Id));
+
+            var uwiCol = mappings.First(m => m.PpdmField == "UWI").CsvColumn!;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var importedUwis = new List<string>();
+
+            foreach (var row in csvRows)
+            {
+                var uwi = row.TryGetValue(uwiCol, out var u) ? u.Trim() : "";
+                if (string.IsNullOrEmpty(uwi) || !seen.Add(uwi)) continue;
+
+                var header = MapRowToWellHeader(row, uwi);
+                var inserted = await WellService.InsertWellAsync(connectionString, header);
+                if (inserted)
+                {
+                    importedCount++;
+                    importedUwis.Add(uwi);
+                } 
+                else
+                {
+                    skippedCount++;
+                }
+            }
+
+            var message = skippedCount > 0
+            ? $"Imported {importedCount} wells, {skippedCount} already existed and were skipped."
+            : $"Successfully imported {importedCount} wells.";
+            Snackbar.Add(message, skippedCount > 0 ? Severity.Warning : Severity.Success);
+            await OnImported.InvokeAsync((importedUwis, addToWellList));
+            ResetState();
+        }
+        catch (Exception ex)
+        {
+            importError = $"Import failed: {ex.Message}";
+        }
+        finally
+        {
+            isImporting = false;
+        }
+    }
+
+    private WellHeader MapRowToWellHeader(Dictionary<string, string> row, string uwi)
+    {
+        string? Get(string field)
+        {
+            var m = mappings.FirstOrDefault(x => x.PpdmField == field);
+            if (m?.CsvColumn == null) return null;
+            return row.TryGetValue(m.CsvColumn, out var v) ? (string.IsNullOrWhiteSpace(v) ? null : v.Trim()) : null;
+        }
+
+        DateTime? GetDate(string field)
+        {
+            var s = Get(field);
+            return DateTime.TryParse(s, out var d) ? d : null;
+        }
+
+        decimal? GetDecimal(string field)
+        {
+            var s = Get(field);
+            return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : null;
+        }
+
+        return new WellHeader
+        {
+            UWI                   = uwi,
+            WELL_NAME             = Get("WELL_NAME"),
+            OPERATOR              = Get("OPERATOR"),
+            ASSIGNED_FIELD        = Get("ASSIGNED_FIELD"),
+            CURRENT_STATUS        = Get("CURRENT_STATUS"),
+            PROFILE_TYPE          = Get("PROFILE_TYPE"),
+            DEPTH_DATUM           = Get("DEPTH_DATUM"),
+            REMARK                = Get("REMARK"),
+            STATE                 = Get("STATE"),
+            COUNTY                = Get("COUNTY"),
+            SPUD_DATE             = GetDate("SPUD_DATE"),
+            FINAL_DRILL_DATE      = GetDate("FINAL_DRILL_DATE"),
+            COMPLETION_DATE       = GetDate("COMPLETION_DATE"),
+            ABANDONMENT_DATE      = GetDate("ABANDONMENT_DATE"),
+            FINAL_TD              = GetDecimal("FINAL_TD"),
+            LOG_TD                = GetDecimal("LOG_TD"),
+            DRILL_TD              = GetDecimal("DRILL_TD"),
+            MAX_TVD               = GetDecimal("MAX_TVD"),
+            KB_ELEV               = GetDecimal("KB_ELEV"),
+            GROUND_ELEV           = GetDecimal("GROUND_ELEV"),
+            SURFACE_LATITUDE      = GetDecimal("SURFACE_LATITUDE"),
+            SURFACE_LONGITUDE     = GetDecimal("SURFACE_LONGITUDE"),
+            BOTTOM_HOLE_LATITUDE  = GetDecimal("BOTTOM_HOLE_LATITUDE"),
+            BOTTOM_HOLE_LONGITUDE = GetDecimal("BOTTOM_HOLE_LONGITUDE"),
+        };
+    }
+
+    private IEnumerable<PpdmFieldMapping> ActiveMappings() =>
+        mappings.Where(m => !string.IsNullOrEmpty(m.CsvColumn));
+
+    private void Cancel()
+    {
+        ResetState();
+        OnClose.InvokeAsync();
+    }
+
+    private void ResetState()
+    {
+        step = 1;
+        fileName = null;
+        parseError = null;
+        csvHeaders = null;
+        csvRows.Clear();
+        previewRows.Clear();
+        mappingError = null;
+        importError = null;
+        isImporting = false;
+        importedCount = 0;
+        duplicateCount = 0;
+        foreach (var m in mappings) m.CsvColumn = null;
+    }
+
+    // Handles quoted fields and commas inside quotes
+    private static List<string> ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var current = new System.Text.StringBuilder();
+        bool inQuotes = false;
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+            if (c == '"')
+            {
+                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    current.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+            }
+            else if (c == ',' && !inQuotes)
+            {
+                fields.Add(current.ToString());
+                current.Clear();
+            }
+            else
+            {
+                current.Append(c);
+            }
+        }
+        fields.Add(current.ToString());
+        return fields;
+    }
+
+    private class PpdmFieldMapping
+    {
+        public string PpdmField { get; }
+        public bool Required { get; }
+        public string? CsvColumn { get; set; }
+        public PpdmFieldMapping(string field, bool required = false)
+        {
+            PpdmField = field;
+            Required = required;
+        }
+    }
+}
