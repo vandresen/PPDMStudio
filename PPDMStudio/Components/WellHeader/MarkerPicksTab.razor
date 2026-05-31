@@ -1,0 +1,66 @@
+﻿@* Components/Shared/MarkerPicksTab.razor *@
+@inject IMarkerpickService MarkerpickService
+@inject IProjectService ProjectService
+@inject ISnackbar Snackbar
+
+<MudTable Items="picks"
+          Dense="true"
+          Hover="true"
+          Loading="isLoading"
+          LoadingProgressColor="Color.Primary"
+          SortLabel="Sort By"
+          Elevation="0">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<MarkerPick, object>(x => x.STRAT_UNIT_ID ?? string.Empty)">Marker</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<MarkerPick, object>(x => x.PICK_DEPTH ?? 0)">MD (ft)</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<MarkerPick, object>(x => x.PICK_TVD ?? 0)">TVD (ft)</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<MarkerPick, object>(x => x.DOMINANT_LITHOLOGY ?? string.Empty)">Lithology</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<MarkerPick, object>(x => x.INTERP_ID ?? string.Empty)">Interp ID</MudTableSortLabel></MudTh>
+        <MudTh>Remark</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Marker">@context.STRAT_UNIT_ID</MudTd>
+        <MudTd DataLabel="MD (ft)">@context.PICK_DEPTH?.ToString("N2")</MudTd>
+        <MudTd DataLabel="TVD (ft)">@context.PICK_TVD?.ToString("N2")</MudTd>
+        <MudTd DataLabel="Lithology">@context.DOMINANT_LITHOLOGY</MudTd>
+        <MudTd DataLabel="Interp ID">@context.INTERP_ID</MudTd>
+        <MudTd DataLabel="Remark">@context.REMARK</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText Typo="Typo.body2" Class="pa-4">No marker picks found for this well.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    [Parameter, EditorRequired] public string? UWI { get; set; }
+
+    private IEnumerable<MarkerPick> picks = Enumerable.Empty<MarkerPick>();
+    private bool isLoading = false;
+
+    private string GetConnectionString() =>
+        ProjectService.SelectedProject!.BuildConnectionString(
+            ProjectService.GetPassword(ProjectService.SelectedProject.Id));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(UWI))
+            await LoadPicks();
+    }
+
+    private async Task LoadPicks()
+    {
+        try
+        {
+            isLoading = true;
+            picks = await MarkerpickService.GetMarkerPicksAsync(GetConnectionString(), UWI!);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading marker picks: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

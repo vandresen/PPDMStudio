@@ -22,6 +22,7 @@ namespace PPDMStudio
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IWellListService, WellListService>();
             services.AddSingleton<IWellService, WellService>();
+            services.AddSingleton<IMarkerpickService, MarkerpickService>();
 
             services.AddMudServices();
 

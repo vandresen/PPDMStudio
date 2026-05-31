@@ -12,6 +12,7 @@ PPDMStudio is a Windows desktop application for viewing and editing well data st
 - [Importing Wells from a CSV File](#importing-wells-from-a-csv-file)
 - [Editing a Well Header](#editing-a-well-header)
 - [Managing Location Data](#managing-location-data)
+- [Viewing Marker Picks](#viewing-marker-picks)
 - [Adding Reference Values](#adding-reference-values)
 - [Data and Audit Trail](#data-and-audit-trail)
 
@@ -122,7 +123,7 @@ Click **Import** to begin. When complete, a summary snackbar reports how many we
  
 ## Editing a Well Header
  
-Click any well row to open the **Well Header Panel**. The panel has two tabs:
+Click any well row to open the **Well Header Panel**. The panel has three tabs:
  
 ### Well Header Tab
  
@@ -141,6 +142,10 @@ The **Cancel** button (✕) discards all unsaved changes and restores the origin
 ### Location Tab
  
 See [Managing Location Data](#managing-location-data) below.
+
+### Marker Picks Tab
+
+See [Viewing Marker Picks](#viewing-marker-picks) below.
  
 ---
  
@@ -165,6 +170,25 @@ County is only available after a state has been selected. Click the **County** f
 ### Coordinates
  
 Enter surface and bottom hole latitude/longitude directly in the coordinate fields.
+
+---
+
+## Viewing Marker Picks
+
+The **Marker Picks** tab on the Well Header Panel displays the stratigraphic picks recorded for the well in the `STRAT_WELL_SECTION` table.
+
+| Column | Description |
+|---|---|
+| Marker | Stratigraphic unit name (`STRAT_UNIT_ID`) |
+| MD (ft) | Measured depth of the pick |
+| TVD (ft) | True vertical depth of the pick |
+| Lithology | Dominant lithology at the pick |
+| Interp ID | The interpretation the pick belongs to |
+| Remark | Free text notes |
+
+Picks are sorted by measured depth. The tab is read-only — editing marker picks is not supported in this version.
+
+> **Note:** Marker pick data is read from the PPDM `STRAT_WELL_SECTION` table. If your database was populated from Petra or a similar application that does not use the PPDM preferred pick indicator, all picks for the well will be shown regardless of interpretation.
  
 ---
  

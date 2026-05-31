@@ -1,5 +1,6 @@
 ﻿@* Components/Shared/WellHeaderPanel.razor *@
 @inject IWellService WellService
+@inject IMarkerpickService MarkerpickService
 @inject IProjectService ProjectService
 @inject ISnackbar Snackbar
 
@@ -68,6 +69,10 @@
                                      SearchCounties="SearchCounties"
                                      OnAddNewState="AddNewState"
                                      OnAddNewCounty="AddNewCounty" />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Marker Picks" Class="pt-3">
+                    <MarkerPicksTab UWI="@UWI" />
                 </MudTabPanel>
 
             </MudTabs>

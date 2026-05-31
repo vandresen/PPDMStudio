@@ -16,6 +16,7 @@ A modern desktop application for viewing and editing **PPDM (Professional Petrol
 - 📍 **Location management** — cascading state and county selection backed by the PPDM Area hierarchy
 - ➕ **Reference table management** — add new operators, statuses, profile types, states, and counties without leaving the panel
 - 📥 **CSV well import** — import well data from comma-delimited files with a three-step mapping wizard
+- 🪨 **Marker picks viewer** — view stratigraphic picks per well sourced from STRAT_WELL_SECTION
 - 🏗️ **Built on PPDM 3.9 standard**
 ## Technology Stack
 - .NET 9 WPF + Blazor Hybrid
@@ -43,7 +44,7 @@ git clone https://github.com/vandresen/PPDMStudio.git
 ## Roadmap
 - [x] Well header editing
 - [ ] Directional surveys
-- [ ] Formation marker picks
+- [x] Formation marker picks
 - [ ] Log viewer
 - [ ] Cross sections
 - [ ] Map view
